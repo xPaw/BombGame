@@ -51,6 +51,16 @@ public OnMapStart( )
 	ServerCommand( "exec BombGame.cfg" );
 }
 
+public OnMapEnd( )
+{
+	if( g_hTimer != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimer );
+		
+		g_hTimer = INVALID_HANDLE;
+	}
+}
+
 public OnClientPutInServer( iClient )
 {
 	FakeClientCommand( iClient, "joingame" );
@@ -82,7 +92,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	PrintToChatAll( "Forcing round end" );
 	
-	CS_TerminateRound( 3.0, CSRoundEnd_TerroristWin );
+	CS_TerminateRound( 3.0, g_iCurrentBomber > 0 ? CSRoundEnd_TargetBombed : CSRoundEnd_TerroristWin );
 }
 
 public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -131,10 +141,13 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	{
 		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
 		{
-			SetEntProp( g_iCurrentBomber, Prop_Send, "m_bGlowEnabled", 0 );
+			set_rendering( g_iCurrentBomber );
 		}
 		
-		SetEntProp( iClient, Prop_Send, "m_bGlowEnabled", 1 );
+		#define FxGlowShell 17
+		#define FxGlow 3
+		
+		set_rendering( iClient, FxGlowShell, 255, 100, 0, FxGlow );
 		
 		g_iCurrentBomber = iClient;
 		
@@ -191,4 +204,20 @@ public Action:OnJoinTeamCommand( iClient, const String:szCommand[], iArguments )
 	FakeClientCommand( iClient, "jointeam %i", TEAM_TERRORITS );
 	
 	return Plugin_Handled;
+}
+
+stock set_rendering(index, fx=0, r=255, g=255, b=255, render=0, amount=255)
+{
+	SetEntProp(index, Prop_Send, "m_nRenderFX", fx, 1);
+	SetEntProp(index, Prop_Send, "m_nRenderMode", render, 1);
+	
+	if( fx > 0 )
+	{
+		new offset = GetEntSendPropOffs(index, "m_clrRender");
+		
+		SetEntData(index, offset, r, 1, true);
+		SetEntData(index, offset + 1, g, 1, true);
+		SetEntData(index, offset + 2, b, 1, true);
+		SetEntData(index, offset + 3, amount, 1, true);
+	}
 }

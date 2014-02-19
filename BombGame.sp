@@ -74,12 +74,16 @@ public OnClientDisconnect( iClient )
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x02 left the game while being the bomber.", szName );
 		
-		CS_TerminateRound( 3.0, CSRoundEnd_TerroristsSurrender );
+		EndRound( );
+		
+		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	g_bStarting = false;
+	
 	new iEntity = -1;
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "hostage_entity" ) ) != -1 )
@@ -92,11 +96,14 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	g_bStarting = false;
-	
 	if( g_hTimer != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimer );
+	}
+	
+	if( g_bStarting )
+	{
+		return;
 	}
 	
 	new iPlayers[ MaxClients ], iAlive, i;
@@ -120,7 +127,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 spawned with the bomb! \x06Run away!", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s spawned with the bomb!", szName );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
 	}
@@ -130,22 +137,25 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 {
 	g_hTimer = INVALID_HANDLE;
 	
-	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
+	new iBomber = g_iCurrentBomber;
+	
+	g_iCurrentBomber = 0;
+	
+	if( iBomber > 0 && IsClientInGame( iBomber ) )
 	{
 		decl String:szName[ 32 ];
-		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
+		GetClientName( iBomber, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has been left with the bomb!", szName );
 		
-		g_bDeadPlayers[ g_iCurrentBomber ] = true;
+		g_bDeadPlayers[ iBomber ] = true;
 		
-		if( IsPlayerAlive( g_iCurrentBomber ) )
+		if( IsPlayerAlive( iBomber ) )
 		{
-			ForcePlayerSuicide( g_iCurrentBomber );
+			ForcePlayerSuicide( iBomber );
 		}
 	}
 	
-	g_iCurrentBomber = 0;
 	g_bStarting = true;
 	g_bGameRunning = false;
 	
@@ -156,7 +166,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
-	new iPlayers, i, iAlivePlayer;
+	new iPlayers, i, iAlivePlayer, Float:flDelay = 7.0;
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
@@ -177,7 +187,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		decl String:szName[ 32 ];
 		GetClientName( iAlivePlayer, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x04 has won the bomb game!", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04%s has won the bomb game!", szName );
 		
 		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
 		
@@ -185,11 +195,12 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		SetEventInt( hLeader, "userid", iAlivePlayer );
 		FireEvent( hLeader );
 		
-		CS_TerminateRound( 10.0, CSRoundEnd_TerroristWin );
+		flDelay = 10.0;
 	}
-	else
+	
+	if( hTimer != INVALID_HANDLE )
 	{
-		CS_TerminateRound( 7.0, CSRoundEnd_TargetBombed );
+		CS_TerminateRound( flDelay, CSRoundEnd_TargetBombed );
 	}
 }
 
@@ -224,12 +235,16 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_iCurrentBomber = 0;
 		
+		g_bDeadPlayers[ iClient ] = true;
+		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x02 suicided while being the bomber.", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s suicided while being the bomber.", szName );
 		
-		CS_TerminateRound( 3.0, CSRoundEnd_TerroristsSurrender );
+		EndRound( );
+		
+		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
 }
 
@@ -265,6 +280,16 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 	}
 	
 	return Plugin_Continue;
+}
+
+EndRound( )
+{
+	if( g_hTimer != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimer );
+	}
+	
+	OnRoundTimerEnd( INVALID_HANDLE );
 }
 
 IsEnoughPlayersToPlay( )

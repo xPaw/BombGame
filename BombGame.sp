@@ -93,7 +93,8 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		i = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
 		
 		GivePlayerItem( i, "weapon_c4" );
-		FakeClientCommand( i, "weapon_c4" );
+		
+		PrintToChatAll( "Giving bomb to #%i", i );
 		
 		new Float:flRoundTime = GetEventFloat( hEvent, "timelimit" );
 		
@@ -105,13 +106,13 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 {
 	g_hTimer = INVALID_HANDLE;
 	
-	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
+	/*if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
 	{
 		new Handle:hLeader = CreateEvent( "round_mvp" );
 		SetEventInt( hLeader, "userid", GetClientUserId( g_iCurrentBomber ) );
 		SetEventInt( hLeader, "reason", 2 );
 		FireEvent( hLeader );
-	}
+	}*/
 	
 	CS_TerminateRound( 7.0, CSRoundEnd_TargetBombed );
 }
@@ -137,7 +138,7 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 	}
 	
 	g_iCurrentBomber = 0;
-	g_bGameRunning = false;
+	g_bStarting = true;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -153,12 +154,14 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04Starting the game!" );
 		
 		CS_TerminateRound( 1.0, CSRoundEnd_GameStart );
+		
+		ServerCommand( "exec BombGame.cfg" );
 	}
 }
 
 public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	if( !g_bGameRunning )
+	if( !g_bGameRunning || g_bStarting )
 	{
 		return;
 	}
@@ -196,7 +199,7 @@ IsEnoughPlayersToPlay( )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsClientInGame( i ) )
+		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
 		{
 			iPlayers++;
 			

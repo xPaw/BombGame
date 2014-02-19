@@ -83,12 +83,8 @@ public OnClientDisconnect( iClient )
 
 public Action:OnRoundWinPanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	decl String:szName[ 32 ];
-	GetEventString( hEvent, "funfact_token", szName, sizeof( szName ) );
-	
-	PrintToChatAll("Fun fact: %s - bomber: %i", szName, g_iCurrentBomber);
-	
-	SetEventString( hEvent, "funfact_token", "%%s1 died with the bomb :(" );
+	SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
+	SetEventInt( hEvent, "funfact_player", 0 );
 	
 	return Plugin_Changed;
 }

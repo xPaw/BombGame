@@ -20,7 +20,6 @@ new Handle:g_hTimer = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
-	HookEvent( "cs_win_panel_round", OnRoundWinPanel, EventHookMode_Pre );
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
@@ -82,27 +81,6 @@ public OnClientDisconnect( iClient )
 		
 		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
-}
-
-public Action:OnRoundWinPanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	LogToGame( "RoundWin: %i - %i - %i - %i", GetEventBool( hEvent, "show_timer_defend" ), GetEventBool( hEvent, "show_timer_attack" ), GetEventInt( hEvent, "timer_time" ), GetEventInt( hEvent, "final_event" ) );
-	
-	decl String:szFunFact[ 2 ];
-	GetEventString( hEvent, "funfact_token", szFunFact, 1 );
-	
-	if( szFunFact[ 0 ] )
-	{
-		SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
-		SetEventInt( hEvent, "funfact_player", 0 );
-		SetEventInt( hEvent, "funfact_data1", 0 );
-		SetEventInt( hEvent, "funfact_data2", 0 );
-		SetEventInt( hEvent, "funfact_data3", 0 );
-		
-		return Plugin_Changed;
-	}
-	
-	return Plugin_Continue;
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -236,7 +214,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		ForcePlayerSuicide( iClient );
 		
-		SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
+		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 		
 		return;
 	}

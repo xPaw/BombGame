@@ -11,19 +11,20 @@ public Plugin:myinfo =
 	url = "http://mwh.co"
 };
 
+new g_bStarting;
+new g_bGameRunning;
 new g_iCurrentBomber;
 new Handle:g_hTimer = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
-	HookEvent( "round_mvp",       OnRoundMVP );
 	HookEvent( "round_end",       OnRoundEnd );
 	HookEvent( "round_start",     OnRoundStart );
 	HookEvent( "bomb_pickup",     OnBombPickup );
 	HookEvent( "jointeam_failed", OnJoinTeamFailed, EventHookMode_Pre );
 	HookEvent( "player_spawn",    OnPlayerSpawn );
 	
-	AddCommandListener( OnJoinTeamCommand, "jointeam" );
+	ServerCommand( "exec BombGame.cfg" );
 }
 
 public OnMapStart( )
@@ -47,8 +48,6 @@ public OnMapStart( )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
-	
-	ServerCommand( "exec BombGame.cfg" );
 }
 
 public OnMapEnd( )
@@ -59,12 +58,6 @@ public OnMapEnd( )
 		
 		g_hTimer = INVALID_HANDLE;
 	}
-}
-
-public OnClientPutInServer( iClient )
-{
-	FakeClientCommand( iClient, "joingame" );
-	FakeClientCommandEx( iClient, "jointeam 2" );
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -86,16 +79,21 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		}
 	}
 	
-	PrintToChatAll( "%i players alive", iAlive );
-	
 	if( g_hTimer != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimer );
 	}
 	
+	g_bStarting = false;
+	
 	if( iAlive > 1 )
 	{
-		GivePlayerItem( iPlayers[ GetRandomInt( 0, iAlive - 1 ) ], "weapon_c4" );
+		g_bGameRunning = true;
+		
+		i = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
+		
+		GivePlayerItem( i, "weapon_c4" );
+		FakeClientCommand( i, "weapon_c4" );
 		
 		new Float:flRoundTime = GetEventFloat( hEvent, "timelimit" );
 		
@@ -107,21 +105,24 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 {
 	g_hTimer = INVALID_HANDLE;
 	
-	PrintToChatAll( "Forcing round end" );
-	
 	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
 	{
 		new Handle:hLeader = CreateEvent( "round_mvp" );
 		SetEventInt( hLeader, "userid", GetClientUserId( g_iCurrentBomber ) );
-		SetEventInt( hLeader, "reason", 1 );
+		SetEventInt( hLeader, "reason", 2 );
 		FireEvent( hLeader );
 	}
 	
-	CS_TerminateRound( 7.0, CSRoundEnd_TerroristWin );
+	CS_TerminateRound( 7.0, CSRoundEnd_TargetBombed );
 }
 
 public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	new String:a[ 32 ];	
+	GetEventString( hEvent, "message", a, 31 );
+	
+	PrintToChatAll( "RoundEnd: winner: %i - reason: %i - message: %s", GetEventInt( hEvent, "winner" ), GetEventInt( hEvent, "reason" ), a );
+	
 	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
 	{
 		decl String:szName[ 32 ];
@@ -136,14 +137,7 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 	}
 	
 	g_iCurrentBomber = 0;
-}
-
-public OnRoundMVP( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
-	new iReason = GetEventInt( hEvent, "reason" );
-	
-	PrintToChatAll( "MVP: %i - Reason: %i", iClient, iReason );
+	g_bGameRunning = false;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -151,10 +145,24 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
+	
+	if( !g_bGameRunning && !g_bStarting && IsEnoughPlayersToPlay( ) )
+	{
+		g_bStarting = true;
+		
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04Starting the game!" );
+		
+		CS_TerminateRound( 1.0, CSRoundEnd_GameStart );
+	}
 }
 
 public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	if( !g_bGameRunning )
+	{
+		return;
+	}
+	
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
 	if( g_iCurrentBomber != iClient )
@@ -164,7 +172,7 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04TEST \x06TEST \x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
 	}
 }
 
@@ -172,11 +180,9 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	if( IsClientInGame( iClient ) )
+	if( IsClientInGame( iClient ) && GetClientTeam( iClient ) != CS_TEAM_T )
 	{
-		PrintToChatAll( "Forced %i to terrorists team because it said it was full", iClient );
-		
-		ChangeClientTeam( iClient, CS_TEAM_T );
+		CS_SwitchTeam( iClient, CS_TEAM_T );
 		
 		return Plugin_Handled;
 	}
@@ -184,23 +190,22 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 	return Plugin_Continue;
 }
 
-public Action:OnJoinTeamCommand( iClient, const String:szCommand[], iArguments )
+IsEnoughPlayersToPlay( )
 {
-	if( iArguments < 1 || !IsClientInGame( iClient ) )
+	new iPlayers, i;
+	
+	for( i = 1; i <= MaxClients; i++ )
 	{
-		return Plugin_Continue;
+		if( IsClientInGame( i ) )
+		{
+			iPlayers++;
+			
+			if( iPlayers > 1 )
+			{
+				return true;
+			}
+		}
 	}
 	
-	new String:szArgument[ 4 ];
-	GetCmdArg( 1, szArgument, sizeof( szArgument ) );
-	new iNewTeam = StringToInt( szArgument );
-	
-	if( iNewTeam == CS_TEAM_SPECTATOR || iNewTeam == CS_TEAM_T )
-	{
-		return Plugin_Continue;
-	}
-	
-	FakeClientCommand( iClient, "jointeam %i", CS_TEAM_T );
-	
-	return Plugin_Handled;
+	return false;
 }

@@ -95,7 +95,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
 	{
 		new Handle:hLeader = CreateEvent( "round_mvp" );
-		SetEventInt( hLeader, "userid", g_iCurrentBomber );
+		SetEventInt( hLeader, "userid", GetClientUserId( g_iCurrentBomber ) );
 		//SetEventInt( hLeader, "reason", 0 );
 		FireEvent( hLeader );
 	}

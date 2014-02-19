@@ -54,6 +54,15 @@ public OnMapStart( )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
+	
+	// Create fake bomb spot
+	iEntity = CreateEntityByName( "func_bomb_target" );
+	DispatchSpawn( iEntity );
+	ActivateEntity( iEntity );
+	TeleportEntity( iEntity, Float:{ -99999.0, -99999.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
+	SetEntPropVector( iEntity, Prop_Send, "m_vecMins", Float:{ -1.0, -1.0, -1.0 } );
+	SetEntPropVector( iEntity, Prop_Send, "m_vecMaxs", Float:{ 1.0, 1.0, 1.0 } );
+	SetEntProp(iEntity, Prop_Send, "m_nSolidType", 2);
 }
 
 public OnMapEnd( )
@@ -153,6 +162,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		
 		if( IsPlayerAlive( iBomber ) )
 		{
+			SetEntityGravity( iBomber, 1.0 );
+			
 			ForcePlayerSuicide( iBomber );
 			
 			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
@@ -249,6 +260,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		g_iCurrentBomber = 0;
 		
 		g_bDeadPlayers[ iClient ] = true;
+		
+		SetEntityGravity( iClient, 1.0 );
 		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );

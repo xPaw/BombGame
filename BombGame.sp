@@ -85,13 +85,21 @@ public Action:OnRoundWinPanel( Handle:hEvent, const String:szActionName[], bool:
 {
 	PrintToChatAll( "RoundWin: %i - %i - %i - %i", GetEventBool( hEvent, "show_timer_defend" ), GetEventBool( hEvent, "show_timer_attack" ), GetEventInt( hEvent, "timer_time" ), GetEventInt( hEvent, "final_event" ) );
 	
-	SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
-	SetEventInt( hEvent, "funfact_player", 0 );
-	SetEventInt( hEvent, "funfact_data1", 0 );
-	SetEventInt( hEvent, "funfact_data2", 0 );
-	SetEventInt( hEvent, "funfact_data3", 0 );
+	decl String:szFunFact[ 2 ];
+	GetEventString( hEvent, "funfact_token", szFunFact, 1 );
 	
-	return Plugin_Changed;
+	if( szFunFact[ 0 ] )
+	{
+		SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
+		SetEventInt( hEvent, "funfact_player", 0 );
+		SetEventInt( hEvent, "funfact_data1", 0 );
+		SetEventInt( hEvent, "funfact_data2", 0 );
+		SetEventInt( hEvent, "funfact_data3", 0 );
+		
+		return Plugin_Changed;
+	}
+	
+	return Plugin_Continue;
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

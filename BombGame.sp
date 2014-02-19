@@ -72,11 +72,11 @@ public OnClientDisconnect( iClient )
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x02 left the game while being the bomber.", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s left the game while being the bomber.", szName );
 		
 		EndRound( );
 		
-		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
+		CS_TerminateRound( 3.0, CSRoundEnd_BombDefused );
 	}
 }
 
@@ -146,7 +146,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		decl String:szName[ 32 ];
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has been left with the bomb!", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s has been left with the bomb!", szName );
 		
 		g_bDeadPlayers[ iBomber ] = true;
 		
@@ -192,7 +192,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
 		
 		new Handle:hLeader = CreateEvent( "round_mvp" );
-		SetEventInt( hLeader, "userid", iAlivePlayer );
+		SetEventInt( hLeader, "userid", GetClientUserId( iAlivePlayer ) );
 		FireEvent( hLeader );
 		
 		flDelay = 10.0;

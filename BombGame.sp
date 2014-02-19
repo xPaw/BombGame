@@ -214,9 +214,9 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04Starting the game!" );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04Starting the game in 3 seconds..." );
 		
-		CS_TerminateRound( 1.0, CSRoundEnd_BombDefused );
+		CS_TerminateRound( 3.0, CSRoundEnd_CTWin );
 		
 		ServerCommand( "exec BombGame.cfg" );
 	}

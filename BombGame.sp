@@ -20,7 +20,7 @@ new Handle:g_hTimer = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
-	//HookEvent( "cs_win_panel_round", OnRoundWinPanel, EventHookMode_Pre );
+	HookEvent( "cs_win_panel_round", OnRoundWinPanel, EventHookMode_Pre );
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
@@ -174,7 +174,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		{
 			ForcePlayerSuicide( iBomber );
 			
-			//SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
+			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
 		}
 	}
 	
@@ -197,7 +197,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 			iAlivePlayer = i;
 			iPlayers++;
 			
-			//CS_SetClientContributionScore( i, CS_GetClientContributionScore( i ) + 1 );
+			CS_SetClientContributionScore( i, CS_GetClientContributionScore( i ) + 1 );
 		}
 	}
 	
@@ -235,6 +235,10 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	if( g_bDeadPlayers[ iClient ] )
 	{
 		ForcePlayerSuicide( iClient );
+		
+		SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
+		
+		return;
 	}
 	
 	//SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
@@ -244,8 +248,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		LogToGame( "Starting game" );
-		//PrintToChatAll( "\x01\x0B\x04[BombGame] \x04The game is starting..." );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04The game is starting..." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
 		
@@ -256,6 +259,8 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	
 	if( iClient == g_iCurrentBomber )
 	{

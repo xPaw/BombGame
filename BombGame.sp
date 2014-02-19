@@ -13,6 +13,7 @@ public Plugin:myinfo =
 
 new g_bDeadPlayers[ MAXPLAYERS ] = { false, ... };
 new g_bStarting;
+new g_bGameRunning;
 new g_iCurrentBomber;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
@@ -23,7 +24,7 @@ public OnPluginStart( )
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
-	//HookEvent( "player_spawn",     OnPlayerPreSpawn, EventHookMode_Pre );
+	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
 	ServerCommand( "exec BombGame.cfg" );
@@ -62,6 +63,21 @@ public OnMapEnd( )
 	}
 }
 
+public OnClientDisconnect( iClient )
+{
+	if( iClient == g_iCurrentBomber )
+	{
+		g_iCurrentBomber = 0;
+		
+		decl String:szName[ 32 ];
+		GetClientName( iClient, szName, sizeof( szName ) );
+		
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x02 left the game while being the bomber.", szName );
+		
+		CS_TerminateRound( 3.0, CSRoundEnd_TerroristsSurrender );
+	}
+}
+
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iEntity = -1;
@@ -95,6 +111,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	
 	if( iAlive > 1 )
 	{
+		g_bGameRunning = true;
+		
 		g_iCurrentBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
@@ -129,6 +147,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	g_iCurrentBomber = 0;
 	g_bStarting = true;
+	g_bGameRunning = false;
 	
 	new iEntity = -1;
 	
@@ -166,7 +185,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		SetEventInt( hLeader, "userid", iAlivePlayer );
 		FireEvent( hLeader );
 		
-		CS_TerminateRound( 10.0, CSRoundEnd_TerroristsSurrender );
+		CS_TerminateRound( 10.0, CSRoundEnd_TerroristWin );
 	}
 	else
 	{
@@ -185,7 +204,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 	
-	if( !g_bStarting && IsEnoughPlayersToPlay( ) )
+	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
 	{
 		g_bStarting = true;
 		
@@ -197,9 +216,26 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 }
 
+public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	if( iClient == g_iCurrentBomber )
+	{
+		g_iCurrentBomber = 0;
+		
+		decl String:szName[ 32 ];
+		GetClientName( iClient, szName, sizeof( szName ) );
+		
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x02 suicided while being the bomber.", szName );
+		
+		CS_TerminateRound( 3.0, CSRoundEnd_TerroristsSurrender );
+	}
+}
+
 public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	if( g_bStarting )
+	if( !g_bGameRunning || g_bStarting )
 	{
 		return;
 	}

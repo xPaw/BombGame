@@ -12,6 +12,7 @@ public Plugin:myinfo =
 };
 
 new g_iCurrentBomber;
+new Handle:g_hTimer = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
@@ -32,7 +33,7 @@ public OnMapStart( )
 	// Remove all bomb sites
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_bomb_target" ) ) != -1 )
 	{
-		AcceptEntityInput( iEntity, "Disable" );
+		AcceptEntityInput( iEntity, "kill" );
 	}
 	
 	// Remove all hostage rescue zones
@@ -48,6 +49,12 @@ public OnMapStart( )
 	}
 }
 
+public OnClientPutInServer( iClient )
+{
+	FakeClientCommand( iClient, "joingame" );
+	FakeClientCommandEx( iClient, "jointeam 2" );
+}
+
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iEntity = -1;
@@ -57,7 +64,23 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
-	g_iCurrentBomber = 0;
+	if( g_hTimer != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimer );
+	}
+	
+	new Float:flRoundTime = GetEventFloat( hEvent, "timelimit" );
+	
+	PrintToChatAll( "Round time is: %f", flRoundTime );
+	
+	g_hTimer = CreateTimer( flRoundTime, OnRoundTimerEnd );
+}
+
+public Action:OnRoundTimerEnd( Handle:hTimer )
+{
+	PrintToChatAll( "Forcing round end" );
+	
+	CS_TerminateRound( 3.0, CSRoundEnd_TerroristWin );
 }
 
 public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -74,6 +97,8 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 			ForcePlayerSuicide( g_iCurrentBomber );
 		}
 	}
+	
+	g_iCurrentBomber = 0;
 }
 
 public OnRoundMVP( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -89,14 +114,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
-	
-	//new iPrimarySlot = GetPlayerWeaponSlot( iClient, CS_SLOT_PRIMARY );
-	new iSecondarySlot = GetPlayerWeaponSlot( iClient, CS_SLOT_SECONDARY );
-	
-	if( iSecondarySlot > -1 )
-	{
-		RemovePlayerItem( iClient, iSecondarySlot );
-	}
 }
 
 public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -105,12 +122,23 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	
 	if( g_iCurrentBomber != iClient )
 	{
+		if( IsPlayerAlive( g_iCurrentBomber ) )
+		{
+			SetEntProp( g_iCurrentBomber, Prop_Send, "m_bGlowEnabled", 0 );
+		}
+		
+		SetEntProp( iClient, Prop_Send, "m_bGlowEnabled", 1 );
+		
 		g_iCurrentBomber = iClient;
 		
 		new String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+		
+		new Handle:hLeader = CreateEvent( "gg_leader" );
+		SetEventInt( hLeader, "playerid", GetEventInt( hEvent, "userid" ) );
+		FireEvent( hLeader );
 	}
 }
 

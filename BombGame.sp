@@ -83,7 +83,7 @@ public OnClientDisconnect( iClient )
 
 public Action:OnRoundWinPanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	PrintToChatAll( "RoundWin: %i - %i - %i - %i", GetEventBool( hEvent, "show_timer_defend" ), GetEventBool( hEvent, "show_timer_attack" ), GetEventInt( hEvent, "timer_time" ), GetEventInt( hEvent, "final_event" ) );
+	LogToGame( "RoundWin: %i - %i - %i - %i", GetEventBool( hEvent, "show_timer_defend" ), GetEventBool( hEvent, "show_timer_attack" ), GetEventInt( hEvent, "timer_time" ), GetEventInt( hEvent, "final_event" ) );
 	
 	decl String:szFunFact[ 2 ];
 	GetEventString( hEvent, "funfact_token", szFunFact, 1 );
@@ -241,7 +241,8 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04The game is starting..." );
+		LogToGame( "Starting game" );
+		//PrintToChatAll( "\x01\x0B\x04[BombGame] \x04The game is starting..." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
 		

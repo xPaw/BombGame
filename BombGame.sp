@@ -59,10 +59,10 @@ public OnMapStart( )
 	iEntity = CreateEntityByName( "func_bomb_target" );
 	DispatchSpawn( iEntity );
 	ActivateEntity( iEntity );
-	TeleportEntity( iEntity, Float:{ -99999.0, -99999.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
+	TeleportEntity( iEntity, Float:{ 0.0, 0.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
 	SetEntPropVector( iEntity, Prop_Send, "m_vecMins", Float:{ -1.0, -1.0, -1.0 } );
 	SetEntPropVector( iEntity, Prop_Send, "m_vecMaxs", Float:{ 1.0, 1.0, 1.0 } );
-	SetEntProp(iEntity, Prop_Send, "m_nSolidType", 2);
+	SetEntProp( iEntity, Prop_Send, "m_fEffects", 32 );
 }
 
 public OnMapEnd( )

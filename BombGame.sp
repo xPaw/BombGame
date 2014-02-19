@@ -122,7 +122,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
-		SetEntPropFloat( iClient, Prop_Send, "m_flMaxspeed", 300.0 );
+		SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", 1.3 );
 		
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
@@ -273,11 +273,10 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	{
 		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
 		{
-			SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flMaxspeed", 250.0 );
+			SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", 1.0 );
 		}
 		
-		SetEntPropFloat( iClient, Prop_Send, "m_flMaxspeed", 300.0 );
-		//SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", 1.5 );
+		SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", 1.3 );
 		
 		g_iCurrentBomber = iClient;
 		

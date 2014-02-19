@@ -83,8 +83,13 @@ public OnClientDisconnect( iClient )
 
 public Action:OnRoundWinPanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	PrintToChatAll( "RoundWin: %i - %i - %i - %i", GetEventBool( hEvent, "show_timer_defend" ), GetEventBool( hEvent, "show_timer_attack" ), GetEventInt( hEvent, "timer_time" ), GetEventInt( hEvent, "final_event" ) );
+	
 	SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
 	SetEventInt( hEvent, "funfact_player", 0 );
+	SetEventInt( hEvent, "funfact_data1", 0 );
+	SetEventInt( hEvent, "funfact_data2", 0 );
+	SetEventInt( hEvent, "funfact_data3", 0 );
 	
 	return Plugin_Changed;
 }

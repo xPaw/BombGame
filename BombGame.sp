@@ -47,6 +47,8 @@ public OnMapStart( )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
+	
+	ServerCommand( "exec BombGame.cfg" );
 }
 
 public OnClientPutInServer( iClient )
@@ -71,13 +73,13 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	new Float:flRoundTime = GetEventFloat( hEvent, "timelimit" );
 	
-	PrintToChatAll( "Round time is: %f", flRoundTime );
-	
 	g_hTimer = CreateTimer( flRoundTime, OnRoundTimerEnd );
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )
 {
+	g_hTimer = INVALID_HANDLE;
+	
 	PrintToChatAll( "Forcing round end" );
 	
 	CS_TerminateRound( 3.0, CSRoundEnd_TerroristWin );
@@ -96,6 +98,11 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 		{
 			ForcePlayerSuicide( g_iCurrentBomber );
 		}
+		
+		new Handle:hLeader = CreateEvent( "round_mvp" );
+		SetEventInt( hLeader, "userid", g_iCurrentBomber );
+		SetEventInt( hLeader, "reason", 0 );
+		FireEvent( hLeader );
 	}
 	
 	g_iCurrentBomber = 0;

@@ -20,14 +20,17 @@ new Handle:g_hTimer = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
-	HookEvent( "cs_win_panel_round", OnRoundWinPanel, EventHookMode_Pre );
+	//HookEvent( "cs_win_panel_round", OnRoundWinPanel, EventHookMode_Pre );
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
-	
+}
+
+public OnConfigsExecuted( )
+{
 	ServerCommand( "exec BombGame.cfg" );
 }
 

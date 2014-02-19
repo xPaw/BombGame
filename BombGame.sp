@@ -1,5 +1,6 @@
 #include < sourcemod >
 #include < sdktools >
+#include < cstrike >
 
 public Plugin:myinfo =
 {
@@ -14,10 +15,12 @@ new g_iCurrentBomber;
 
 public OnPluginStart( )
 {
+	HookEvent( "round_mvp",       OnRoundMVP );
 	HookEvent( "round_end",       OnRoundEnd );
 	HookEvent( "round_start",     OnRoundStart );
 	HookEvent( "bomb_pickup",     OnBombPickup );
 	HookEvent( "jointeam_failed", OnJoinTeamFailed, EventHookMode_Pre );
+	HookEvent( "player_spawn",    OnPlayerSpawn );
 	
 	AddCommandListener( OnJoinTeamCommand, "jointeam" );
 }
@@ -29,7 +32,7 @@ public OnMapStart( )
 	// Remove all bomb sites
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_bomb_target" ) ) != -1 )
 	{
-		AcceptEntityInput( iEntity, "kill" );
+		AcceptEntityInput( iEntity, "Disable" );
 	}
 	
 	// Remove all hostage rescue zones
@@ -64,7 +67,7 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 		new String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x01[BombGame] \x02%s\x01 has been left with the bomb!", szName );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has been left with the bomb!", szName );
 		
 		if( IsPlayerAlive( g_iCurrentBomber ) )
 		{
@@ -73,16 +76,42 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 	}
 }
 
+public OnRoundMVP( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	new iReason = GetEventInt( hEvent, "reason" );
+	
+	PrintToChatAll( "MVP: %i - Reason: %i", iClient, iReason );
+}
+
+public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
+	
+	//new iPrimarySlot = GetPlayerWeaponSlot( iClient, CS_SLOT_PRIMARY );
+	new iSecondarySlot = GetPlayerWeaponSlot( iClient, CS_SLOT_SECONDARY );
+	
+	if( iSecondarySlot > -1 )
+	{
+		RemovePlayerItem( iClient, iSecondarySlot );
+	}
+}
+
 public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	g_iCurrentBomber = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	new String:szName[ 32 ];
-	GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
-	
-	PrintToChatAll( "\x01\x0B\x01[BombGame] \x02%s\x01 has picked up the bomb!", szName );
-	
-	return Plugin_Continue;
+	if( g_iCurrentBomber != iClient )
+	{
+		g_iCurrentBomber = iClient;
+		
+		new String:szName[ 32 ];
+		GetClientName( iClient, szName, sizeof( szName ) );
+		
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+	}
 }
 
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

@@ -122,6 +122,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
+		SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", 1.5 );
+		
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
@@ -215,6 +217,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		ForcePlayerSuicide( iClient );
 		
 		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
+		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
 		
 		return;
 	}
@@ -268,6 +271,13 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	
 	if( g_iCurrentBomber != iClient )
 	{
+		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
+		{
+			SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", 1.0 );
+		}
+		
+		SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", 1.5 );
+		
 		g_iCurrentBomber = iClient;
 		
 		decl String:szName[ 32 ];

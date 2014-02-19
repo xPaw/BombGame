@@ -2,6 +2,9 @@
 #include < sdktools >
 #include < cstrike >
 
+#define TEAM_SPECTATORS 1
+#define TEAM_TERRORISTS 2
+
 public Plugin:myinfo =
 {
 	name = "BombGame",
@@ -144,10 +147,9 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 			set_rendering( g_iCurrentBomber );
 		}
 		
-		#define FxGlowShell 17
-		#define FxGlow 3
+		#define kRenderFxGlowShell 17
 		
-		set_rendering( iClient, FxGlowShell, 255, 100, 0, FxGlow );
+		set_rendering( iClient, kRenderFxGlowShell, 255, 255, 0 );
 		
 		g_iCurrentBomber = iClient;
 		
@@ -170,7 +172,7 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 	{
 		PrintToChatAll( "Forced %i to terrorists team because it said it was full", iClient );
 		
-		ChangeClientTeam( iClient, 2 );
+		ChangeClientTeam( iClient, TEAM_TERRORISTS );
 		
 		return Plugin_Handled;
 	}
@@ -185,39 +187,29 @@ public Action:OnJoinTeamCommand( iClient, const String:szCommand[], iArguments )
 		return Plugin_Continue;
 	}
 	
-	#define TEAM_SPECTATORS 1
-	#define TEAM_TERRORITS  2
-	
 	new String:szArgument[ 4 ];
 	GetCmdArg( 1, szArgument, sizeof( szArgument ) );
 	new iNewTeam = StringToInt( szArgument );
 	
-	if( iNewTeam == TEAM_SPECTATORS || iNewTeam == TEAM_TERRORITS )
+	if( iNewTeam == TEAM_SPECTATORS || iNewTeam == TEAM_TERRORISTS )
 	{
-		ReplyToCommand( iClient, "You joined team %i", iNewTeam );
-		
 		return Plugin_Continue;
 	}
 	
-	ReplyToCommand( iClient, "Forced to join terrorists" );
-	
-	FakeClientCommand( iClient, "jointeam %i", TEAM_TERRORITS );
+	FakeClientCommand( iClient, "jointeam %i", TEAM_TERRORISTS );
 	
 	return Plugin_Handled;
 }
 
-stock set_rendering(index, fx=0, r=255, g=255, b=255, render=0, amount=255)
+stock set_rendering( index, fx=0, r=255, g=255, b=255, render=0, amount=255 )
 {
-	SetEntProp(index, Prop_Send, "m_nRenderFX", fx, 1);
-	SetEntProp(index, Prop_Send, "m_nRenderMode", render, 1);
+	SetEntProp( index, Prop_Send, "m_nRenderFX", fx, 1 );
+	SetEntProp( index, Prop_Send, "m_nRenderMode", render, 1 );
 	
-	if( fx > 0 )
-	{
-		new offset = GetEntSendPropOffs(index, "m_clrRender");
-		
-		SetEntData(index, offset, r, 1, true);
-		SetEntData(index, offset + 1, g, 1, true);
-		SetEntData(index, offset + 2, b, 1, true);
-		SetEntData(index, offset + 3, amount, 1, true);
-	}
+	new offset = GetEntSendPropOffs( index, "m_clrRender" );
+	
+	SetEntData( index, offset, r, 1, true );
+	SetEntData( index, offset + 1, g, 1, true );
+	SetEntData( index, offset + 2, b, 1, true );
+	SetEntData( index, offset + 3, amount, 1, true );
 }

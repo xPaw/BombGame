@@ -2,9 +2,6 @@
 #include < sdktools >
 #include < cstrike >
 
-#define TEAM_SPECTATORS 1
-#define TEAM_TERRORISTS 2
-
 public Plugin:myinfo =
 {
 	name = "BombGame",
@@ -95,7 +92,15 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	PrintToChatAll( "Forcing round end" );
 	
-	CS_TerminateRound( 3.0, g_iCurrentBomber > 0 ? CSRoundEnd_TargetBombed : CSRoundEnd_TerroristWin );
+	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
+	{
+		new Handle:hLeader = CreateEvent( "round_mvp" );
+		SetEventInt( hLeader, "userid", g_iCurrentBomber );
+		//SetEventInt( hLeader, "reason", 0 );
+		FireEvent( hLeader );
+	}
+	
+	CS_TerminateRound( 3.0, CSRoundEnd_TerroristWin );
 }
 
 public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -111,11 +116,6 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 		{
 			ForcePlayerSuicide( g_iCurrentBomber );
 		}
-		
-		new Handle:hLeader = CreateEvent( "round_mvp" );
-		SetEventInt( hLeader, "userid", g_iCurrentBomber );
-		SetEventInt( hLeader, "reason", 0 );
-		FireEvent( hLeader );
 	}
 	
 	g_iCurrentBomber = 0;
@@ -142,25 +142,12 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	
 	if( g_iCurrentBomber != iClient )
 	{
-		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
-		{
-			set_rendering( g_iCurrentBomber );
-		}
-		
-		#define kRenderFxGlowShell 17
-		
-		set_rendering( iClient, kRenderFxGlowShell, 255, 255, 0 );
-		
 		g_iCurrentBomber = iClient;
 		
 		new String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
-		
-		new Handle:hLeader = CreateEvent( "gg_leader" );
-		SetEventInt( hLeader, "playerid", GetEventInt( hEvent, "userid" ) );
-		FireEvent( hLeader );
+		PrintToChatAll( "\x01\x0B\x05[BombGame] \x02%s\x01 has picked up the bomb!", szName );
 	}
 }
 
@@ -172,7 +159,7 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 	{
 		PrintToChatAll( "Forced %i to terrorists team because it said it was full", iClient );
 		
-		ChangeClientTeam( iClient, TEAM_TERRORISTS );
+		ChangeClientTeam( iClient, CS_TEAM_T );
 		
 		return Plugin_Handled;
 	}
@@ -191,25 +178,12 @@ public Action:OnJoinTeamCommand( iClient, const String:szCommand[], iArguments )
 	GetCmdArg( 1, szArgument, sizeof( szArgument ) );
 	new iNewTeam = StringToInt( szArgument );
 	
-	if( iNewTeam == TEAM_SPECTATORS || iNewTeam == TEAM_TERRORISTS )
+	if( iNewTeam == CS_TEAM_SPECTATOR || iNewTeam == CS_TEAM_T )
 	{
 		return Plugin_Continue;
 	}
 	
-	FakeClientCommand( iClient, "jointeam %i", TEAM_TERRORISTS );
+	FakeClientCommand( iClient, "jointeam %i", CS_TEAM_T );
 	
 	return Plugin_Handled;
-}
-
-stock set_rendering( index, fx=0, r=255, g=255, b=255, render=0, amount=255 )
-{
-	SetEntProp( index, Prop_Send, "m_nRenderFX", fx, 1 );
-	SetEntProp( index, Prop_Send, "m_nRenderMode", render, 1 );
-	
-	new offset = GetEntSendPropOffs( index, "m_clrRender" );
-	
-	SetEntData( index, offset, r, 1, true );
-	SetEntData( index, offset + 1, g, 1, true );
-	SetEntData( index, offset + 2, b, 1, true );
-	SetEntData( index, offset + 3, amount, 1, true );
 }

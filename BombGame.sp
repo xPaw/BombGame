@@ -76,14 +76,31 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
+	new iPlayers[ MaxClients ], iAlive, i;
+	
+	for( i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
+		{
+			iPlayers[ iAlive++ ] = i;
+		}
+	}
+	
+	PrintToChatAll( "%i players alive", iAlive );
+	
 	if( g_hTimer != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimer );
 	}
 	
-	new Float:flRoundTime = GetEventFloat( hEvent, "timelimit" );
-	
-	g_hTimer = CreateTimer( flRoundTime, OnRoundTimerEnd );
+	if( iAlive > 1 )
+	{
+		GivePlayerItem( iPlayers[ GetRandomInt( 0, iAlive - 1 ) ], "weapon_c4" );
+		
+		new Float:flRoundTime = GetEventFloat( hEvent, "timelimit" );
+		
+		g_hTimer = CreateTimer( flRoundTime, OnRoundTimerEnd );
+	}
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )
@@ -96,18 +113,18 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	{
 		new Handle:hLeader = CreateEvent( "round_mvp" );
 		SetEventInt( hLeader, "userid", GetClientUserId( g_iCurrentBomber ) );
-		//SetEventInt( hLeader, "reason", 0 );
+		SetEventInt( hLeader, "reason", 1 );
 		FireEvent( hLeader );
 	}
 	
-	CS_TerminateRound( 3.0, CSRoundEnd_TerroristWin );
+	CS_TerminateRound( 7.0, CSRoundEnd_TerroristWin );
 }
 
 public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	if( g_iCurrentBomber > 0 && IsClientInGame( g_iCurrentBomber ) )
 	{
-		new String:szName[ 32 ];
+		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has been left with the bomb!", szName );
@@ -144,10 +161,10 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	{
 		g_iCurrentBomber = iClient;
 		
-		new String:szName[ 32 ];
+		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x05[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+		PrintToChatAll( "\x01\x0B\x04TEST \x06TEST \x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
 	}
 }
 

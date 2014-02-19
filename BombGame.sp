@@ -14,9 +14,10 @@ new g_iCurrentBomber;
 
 public OnPluginStart( )
 {
-	HookEvent( "round_end",   OnRoundEnd );
-	HookEvent( "round_start", OnRoundStart );
-	HookEvent( "item_pickup", OnItemPickUp );
+	HookEvent( "round_end",       OnRoundEnd );
+	HookEvent( "round_start",     OnRoundStart );
+	HookEvent( "bomb_pickup",     OnBombPickup );
+	HookEvent( "jointeam_failed", OnJoinTeamFailed, EventHookMode_Pr e);
 	
 	AddCommandListener( OnJoinTeamCommand, "jointeam" );
 }
@@ -25,12 +26,20 @@ public OnMapStart( )
 {
 	new iEntity = -1;
 	
+	// Remove all bomb sites
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_bomb_target" ) ) != -1 )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
+	// Remove all hostage rescue zones
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_hostage_rescue" ) ) != -1 )
+	{
+		AcceptEntityInput( iEntity, "kill" );
+	}
+	
+	// Remove all counter-terrorist spawn points
+	while( ( iEntity = FindEntityByClassname( iEntity, "info_player_counterterrorist" ) ) != -1 )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
@@ -64,18 +73,29 @@ public OnRoundEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadca
 	}
 }
 
-public Action:OnItemPickUp( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	new String:szName[ 32 ];
-	GetEventString( hEvent, "item", szName, sizeof( szName ) );
+	g_iCurrentBomber = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	if( StrEqual( szName, "weapon_c4", false ) )
+	new String:szName[ 32 ];
+	GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
+	
+	PrintToChatAll( "\x01\x0B\x01[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+	
+	return Plugin_Continue;
+}
+
+public Action:Event_JoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	if( IsClientInGame( iClient ) )
 	{
-		g_iCurrentBomber = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+		PrintToChatAll( "Forced %i to terrorists team because it said it was full", iClient );
 		
-		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
+		ChangeClientTeam( iClient, 2 );
 		
-		PrintToChatAll( "\x01\x0B\x01[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+		return Plugin_Handled;
 	}
 	
 	return Plugin_Continue;
@@ -104,7 +124,7 @@ public Action:OnJoinTeamCommand( iClient, const String:szCommand[], iArguments )
 	
 	ReplyToCommand( iClient, "Forced to join terrorists" );
 	
-	ChangeClientTeam( iClient, TEAM_TERRORITS );
+	FakeClientCommand( iClient, "jointeam %i", TEAM_TERRORITS );
 	
 	return Plugin_Handled;
 }

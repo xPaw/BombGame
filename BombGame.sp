@@ -76,14 +76,12 @@ public OnClientDisconnect( iClient )
 		
 		EndRound( );
 		
-		CS_TerminateRound( 3.0, CSRoundEnd_BombDefused );
+		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	g_bStarting = false;
-	
 	new iEntity = -1;
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "hostage_entity" ) ) != -1 )
@@ -101,11 +99,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		CloseHandle( g_hTimer );
 	}
 	
-	if( g_bStarting )
-	{
-		return;
-	}
-	
 	new iPlayers[ MaxClients ], iAlive, i;
 	
 	for( i = 1; i <= MaxClients; i++ )
@@ -115,6 +108,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 			iPlayers[ iAlive++ ] = i;
 		}
 	}
+	
+	g_bStarting = false;
 	
 	if( iAlive > 1 )
 	{
@@ -221,7 +216,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04Starting the game!" );
 		
-		CS_TerminateRound( 1.0, CSRoundEnd_GameStart );
+		CS_TerminateRound( 1.0, CSRoundEnd_BombDefused );
 		
 		ServerCommand( "exec BombGame.cfg" );
 	}

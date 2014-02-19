@@ -20,6 +20,7 @@ new Handle:g_hTimer = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
+	HookEvent( "cs_win_panel_round", OnRoundWinPanel, EventHookMode_Pre );
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
@@ -78,6 +79,18 @@ public OnClientDisconnect( iClient )
 		
 		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
+}
+
+public Action:OnRoundWinPanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	decl String:szName[ 32 ];
+	GetEventString( hEvent, "funfact_token", szName, sizeof( szName ) );
+	
+	PrintToChatAll("Fun fact: %s - bomber: %i", szName, g_iCurrentBomber);
+	
+	SetEventString( hEvent, "funfact_token", "%%s1 died with the bomb :(" );
+	
+	return Plugin_Changed;
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -148,6 +161,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		if( IsPlayerAlive( iBomber ) )
 		{
 			ForcePlayerSuicide( iBomber );
+			
+			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
 		}
 	}
 	
@@ -169,6 +184,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		{
 			iAlivePlayer = i;
 			iPlayers++;
+			
+			CS_SetClientContributionScore( i, CS_GetClientContributionScore( i ) + 1 );
 		}
 	}
 	
@@ -205,18 +222,19 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bDeadPlayers[ iClient ] )
 	{
-		ForcePlayerSuicide( g_iCurrentBomber );
+		ForcePlayerSuicide( iClient );
 	}
 	
+	SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 	
 	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04Starting the game in 3 seconds..." );
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04The game is starting..." );
 		
-		CS_TerminateRound( 3.0, CSRoundEnd_CTWin );
+		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
 		
 		ServerCommand( "exec BombGame.cfg" );
 	}

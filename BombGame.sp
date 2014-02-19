@@ -17,7 +17,7 @@ public OnPluginStart( )
 	HookEvent( "round_end",       OnRoundEnd );
 	HookEvent( "round_start",     OnRoundStart );
 	HookEvent( "bomb_pickup",     OnBombPickup );
-	HookEvent( "jointeam_failed", OnJoinTeamFailed, EventHookMode_Pr e);
+	HookEvent( "jointeam_failed", OnJoinTeamFailed, EventHookMode_Pre );
 	
 	AddCommandListener( OnJoinTeamCommand, "jointeam" );
 }
@@ -85,7 +85,7 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	return Plugin_Continue;
 }
 
-public Action:Event_JoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	

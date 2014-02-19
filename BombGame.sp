@@ -122,7 +122,7 @@ public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDo
 	
 	if( g_iCurrentBomber != iClient )
 	{
-		if( IsPlayerAlive( g_iCurrentBomber ) )
+		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
 		{
 			SetEntProp( g_iCurrentBomber, Prop_Send, "m_bGlowEnabled", 0 );
 		}

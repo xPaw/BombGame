@@ -2,6 +2,11 @@
 #include < sdktools >
 #include < cstrike >
 
+#define HIDEHUD_RADAR ( 1 << 12 )
+
+#define BOMBER_SPEED   1.25
+#define BOMBER_GRAVITY 0.75
+
 public Plugin:myinfo =
 {
 	name = "BombGame",
@@ -37,6 +42,7 @@ public OnConfigsExecuted( )
 	
 	PrecacheSound( "error.wav" );
 	PrecacheSound( "ui/beep22.wav" );
+	PrecacheSound( "misc/bombgame_countdown.wav" );
 }
 
 public OnMapStart( )
@@ -152,6 +158,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
+			
+			HideRadar( i );
 		}
 	}
 	
@@ -165,18 +173,20 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
-		SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", 1.3 );
-		SetEntityGravity( g_iCurrentBomber, 0.7 );
+		SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", BOMBER_SPEED );
+		SetEntityGravity( g_iCurrentBomber, BOMBER_GRAVITY );
 		
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s spawned with the bomb!", szName );
 		
+		ShowRadar( g_iCurrentBomber );
+		
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
-		g_hTimerSound  = CreateTimer( g_flRoundTime - 10.5, OnRoundSoundTimer );
+		g_hTimerSound = CreateTimer( g_flRoundTime - 12.0, OnRoundSoundTimer );
 	}
 }
 
@@ -184,7 +194,9 @@ public Action:OnRoundSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
-	PrintToChatAll( "\x01\x0B\x04[BombGame] \x04 10 seconds remaining!" );
+	PrintToChatAll( "\x01\x0B\x04[BombGame] \x04 12 seconds remaining!" );
+	
+	EmitSoundToAll( "misc/bombgame_countdown.wav" );
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )
@@ -323,6 +335,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	
+	ShowRadar( iClient );
+	
 	if( iClient == g_iCurrentBomber )
 	{
 		g_iCurrentBomber = 0;
@@ -400,10 +414,14 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		{
 			SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", 1.0 );
 			SetEntityGravity( g_iCurrentBomber, 1.0 );
+			
+			HideRadar( g_iCurrentBomber );
 		}
 		
-		SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", 1.3 );
-		SetEntityGravity( iClient, 0.7 );
+		SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", BOMBER_SPEED );
+		SetEntityGravity( iClient, BOMBER_GRAVITY );
+		
+		ShowRadar( iClient );
 		
 		g_iCurrentBomber = iClient;
 		
@@ -532,4 +550,14 @@ CheckEnoughPlayers( )
 	ResetGame( );
 	
 	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
+}
+
+HideRadar( iClient )
+{
+	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) | HIDEHUD_RADAR );
+}
+
+ShowRadar( iClient )
+{
+	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) & ~HIDEHUD_RADAR );
 }

@@ -160,6 +160,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s spawned with the bomb!", szName );
 		
+		EmitSoundToClient( iClient, "ui/beep22.wav" );
+		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
 	}
 }
@@ -174,8 +176,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	if( iBomber > 0 && IsClientInGame( iBomber ) )
 	{
-		EmitSoundToAll( "ui/beep22.wav" );
-		
 		decl String:szName[ 32 ];
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
@@ -391,7 +391,7 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
 		
-		EmitSoundToAll( "error.wav" );
+		EmitSoundToAll( "error.wav", iClient );
 	}
 }
 

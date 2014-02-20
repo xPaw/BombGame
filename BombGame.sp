@@ -18,6 +18,7 @@ new g_iLastBomber;
 new g_iCurrentBomber;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
+new Handle:g_hTimerSound = INVALID_HANDLE;
 
 public OnPluginStart( )
 {
@@ -79,6 +80,13 @@ public OnMapEnd( )
 		g_hTimer = INVALID_HANDLE;
 	}
 	
+	if( g_hTimerSound != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerSound );
+		
+		g_hTimerSound = INVALID_HANDLE;
+	}
+	
 	ResetGame( );
 }
 
@@ -132,6 +140,11 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		CloseHandle( g_hTimer );
 	}
 	
+	if( g_hTimerSound != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerSound );
+	}
+	
 	new iPlayers[ MaxClients ], iAlive, i;
 	
 	for( i = 1; i <= MaxClients; i++ )
@@ -160,10 +173,18 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s spawned with the bomb!", szName );
 		
-		EmitSoundToClient( iClient, "ui/beep22.wav" );
+		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
+		g_hTimerSound  = CreateTimer( g_flRoundTime - 10.5, OnRoundSoundTimer );
 	}
+}
+
+public Action:OnRoundSoundTimer( Handle:hTimer )
+{
+	g_hTimerSound = INVALID_HANDLE;
+	
+	PrintToChatAll( "\x01\x0B\x04[BombGame] \x04 10 seconds remaining!" );
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )
@@ -414,6 +435,15 @@ EndRound( )
 	if( g_hTimer != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimer );
+		
+		g_hTimer = INVALID_HANDLE;
+	}
+	
+	if( g_hTimerSound != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerSound );
+		
+		g_hTimerSound = INVALID_HANDLE;
 	}
 	
 	OnRoundTimerEnd( INVALID_HANDLE );

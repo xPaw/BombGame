@@ -8,7 +8,7 @@ public Plugin:myinfo =
 	author = "xPaw",
 	description = "Good ol' bomb game.",
 	version = "1.0",
-	url = "http://mwh.co"
+	url = "http://xpaw.ru"
 };
 
 new g_bDeadPlayers[ MAXPLAYERS ] = { false, ... };
@@ -272,9 +272,36 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
+	
+	new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
+	
+	if( iRagdoll > 0 )
+	{
+		new iEntity = CreateEntityByName( "env_entity_dissolver" );
+		
+		if( iEntity > 0 )
+		{
+			new String:szTargetName[ 16 ];
+			Format( szTargetName, sizeof( szTargetName ), "dissolve_%i", iClient );
+			
+			PrintToChatAll( "Created env_entity_dissolver: %s", szTargetName );
+			
+			DispatchKeyValue( iRagdoll, "targetname", szTargetName );
+			DispatchKeyValue( iEntity, "target", szTargetName );
+			DispatchKeyValue( iEntity, "dissolvetype", "3" );
+			AcceptEntityInput( iEntity, "Dissolve" );
+			AcceptEntityInput( iEntity, "kill" );
+		}
+		else
+		{
+			PrintToChatAll( "Failed to create env_entity_dissolver" );
+			
+			AcceptEntityInput( iRagdoll, "kill" );
+		}
+	}
 }
 
-public Action:OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	if( !g_bGameRunning || g_bStarting )
 	{

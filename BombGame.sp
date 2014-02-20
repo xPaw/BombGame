@@ -21,6 +21,7 @@ new g_bStarting;
 new g_bGameRunning;
 new g_iLastBomber;
 new g_iCurrentBomber;
+new g_iPreviousBomber;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -34,21 +35,20 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
+	
+	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
+	HookEvent( "teamplay_broadcast_audio", OnBroadcastAudio, EventHookMode_Pre );
 }
 
 public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
 	
-	new stringTable = FindStringTable( "soundprecache" );
-	
 	AddFileToDownloadsTable( "sound/misc/bombgame_countdown.wav" );
-	AddFileToDownloadsTable( "sound/error.wav" );
-	AddFileToDownloadsTable( "sound/ui/beep22.wav" );
+	AddToStringTable( FindStringTable( "soundprecache" ), "*misc/bombgame_countdown.wav" );
 	
-	AddToStringTable( stringTable, "*misc/bombgame_countdown.wav" );
-	AddToStringTable( stringTable, "*error.wav" );
-	AddToStringTable( stringTable, "*ui/beep22.wav" );
+	PrecacheSound( "*error.wav" );
+	PrecacheSound( "*ui/beep22.wav" );
 }
 
 public OnMapStart( )
@@ -111,7 +111,7 @@ public OnClientDisconnect( iClient )
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s left the game while being the bomber.", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame] \x02%s left the game while being the bomber.", szName );
 		
 		EndRound( );
 		
@@ -131,9 +131,25 @@ public OnClientPutInServer( iClient )
 	}
 }
 
+public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	PrintToChatAll( "OnRoundAnnounceMatchStart" );
+}
+
+public Action:OnBroadcastAudio( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iTeam = GetEventInt( hEvent, "team" );
+	
+	new String:a[ 64 ];
+	GetEventString( hEvent, "sound", a, sizeof( a ) );
+	
+	PrintToChatAll( "OnBroadcastAudio: team %i - sound %s", iTeam, a );
+}
+
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iLastBomber = 0;
+	g_iPreviousBomber = 0;
 	
 	new iEntity = -1;
 	
@@ -175,7 +191,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	{
 		g_bGameRunning = true;
 		
-		g_iCurrentBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
+		g_iCurrentBomber = g_iPreviousBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
@@ -185,7 +201,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s spawned with the bomb!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s\x02 spawned with the bomb!", szName );
 		
 		ShowRadar( g_iCurrentBomber );
 		
@@ -199,8 +215,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 public Action:OnRoundSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
-	
-	PrintToChatAll( "\x01\x0B\x04[BombGame] \x04 12 seconds remaining!" );
 	
 	EmitSoundToAll( "misc/bombgame_countdown.wav" );
 }
@@ -218,7 +232,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		decl String:szName[ 32 ];
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s has been left with the bomb!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x04 has been left with the bomb!", szName );
 		
 		g_iLastBomber = iBomber;
 		
@@ -259,15 +273,10 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	if( iPlayers == 1 )
 	{
-		for( i = 1; i <= MaxClients; i++ )
-		{
-			g_bDeadPlayers[ i ] = false;
-		}
-		
 		decl String:szName[ 32 ];
 		GetClientName( iAlivePlayer, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04%s has won the bomb game!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x04 has won the bomb game!", szName );
 		
 		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
 		
@@ -282,6 +291,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	{
 		CS_TerminateRound( flDelay, CSRoundEnd_TargetBombed );
 	}
+	
+	CS_SetTeamScore( CS_TEAM_T, CS_GetTeamScore( CS_TEAM_T ) + 1 );
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -290,7 +301,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bDeadPlayers[ iClient ] )
 	{
-		PrintToChat( iClient, "\x01\x0B\x04[BombGame] \x04You can't play this round!" );
+		PrintToChat( iClient, " \x01\x0B\x04[BombGame] \x04You can't play this round!" );
 		
 		ForcePlayerSuicide( iClient );
 		
@@ -307,9 +318,11 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x04The game is starting..." );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 The game is starting..." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
+		
+		CS_SetTeamScore( CS_TEAM_T, 0 );
 		
 		ServerCommand( "exec BombGame.cfg" );
 	}
@@ -321,11 +334,17 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	
 	if( g_iLastBomber > 0 && g_iLastBomber == iClient )
 	{
-		PrintToChatAll( "Setting death weapon to c4" );
+		PrintToChatAll( "Setting death weapon to ak47" );
 		
-		//SetEventString( hEvent, "weapon", "c4" );
+		SetEventString( hEvent, "weapon", "ak47" );
+		SetEventInt( hEvent, "dominated", 1 );
 		
-		//return Plugin_Changed;
+		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
+		{
+			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
+		}
+		
+		return Plugin_Continue;
 	}
 	else if( g_bDeadPlayers[ iClient ] )
 	{
@@ -355,7 +374,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s suicided while being the bomber.", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame] \x02%s suicided while being the bomber.", szName );
 		
 		EndRound( );
 		
@@ -424,17 +443,18 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 			HideRadar( g_iCurrentBomber );
 		}
 		
+		g_iPreviousBomber = g_iCurrentBomber;
+		g_iCurrentBomber = iClient;
+		
 		SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", BOMBER_SPEED );
 		SetEntityGravity( iClient, BOMBER_GRAVITY );
 		
 		ShowRadar( iClient );
 		
-		g_iCurrentBomber = iClient;
-		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
 		
 		EmitSoundToAll( "error.wav", iClient );
 	}
@@ -508,6 +528,7 @@ ResetGame( )
 	g_bStarting = false;
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
+	g_iPreviousBomber = 0;
 }
 
 CheckEnoughPlayers( )
@@ -546,7 +567,7 @@ CheckEnoughPlayers( )
 		decl String:szName[ 32 ];
 		GetClientName( iLastPlayer, szName, sizeof( szName ) );
 		
-		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s was the last person alive, everyone else left or died, resetting the game.", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame] \x02%s was the last person alive, everyone else left or died, resetting the game.", szName );
 	}
 	else
 	{

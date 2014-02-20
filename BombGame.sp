@@ -54,32 +54,21 @@ public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM
 {
 	new dummy;
 	
-	if( GetTrieValue( g_hBlockedSounds, sample, dummy ) )
-	{
-		PrintToChatAll( "Blocking sound: %s (from entity %i)", sample, entity );
-		
-		return Plugin_Handled;
-	}
-	
-	if( !StrContains( sample, "footsteps" ) && !StrContains( sample, "player/land" ) )
+	if( !StrContains( sample, "footsteps" ) )
 	{
 		PrintToChatAll( "Sound: %s", sample );
 	}
 	
-	return Plugin_Continue;
+	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
 }
 
 public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
 	
-	AddFileToDownloadsTable( "sound/misc/bombgame_countdown.mp3" );
-	
 	PrecacheSound( "error.wav" );
 	PrecacheSound( "ui/beep22.wav" );
-	PrecacheSound( "misc/bombgame_countdown.mp3" );
-	
-	AddToStringTable( FindStringTable( "soundprecache" ), "*misc/bombgame_countdown.mp3" );
+	PrecacheSound( "training/countdown.wav" );
 }
 
 public OnMapStart( )
@@ -224,7 +213,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
-		g_hTimerSound = CreateTimer( g_flRoundTime - 10.0, OnRoundSoundTimer );
+		g_hTimerSound = CreateTimer( g_flRoundTime - 3.0, OnRoundSoundTimer );
 	}
 }
 
@@ -232,7 +221,7 @@ public Action:OnRoundSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
-	EmitSoundToAll( "misc/bombgame_countdown.mp3" );
+	EmitSoundToAll( "training/countdown.wav" );
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )

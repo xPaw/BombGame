@@ -206,7 +206,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s spawned with the bomb!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 spawned with the bomb!", szName );
 		
 		ShowRadar( g_iCurrentBomber );
 		
@@ -226,7 +226,7 @@ public Action:OnRoundSoundTimer( Handle:hTimer )
 	CreateTimer( 3.0, OnRoundSoundTimer2 );
 }
 
-public Action:OnRoundSoundTimer( Handle:hTimer )
+public Action:OnRoundSoundTimer2( Handle:hTimer )
 {
 	EmitSoundToAll( "training/countdown.wav" );
 }
@@ -332,7 +332,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 The game is starting..." );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting..." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
 	}

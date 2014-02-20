@@ -102,11 +102,9 @@ public OnClientDisconnect( iClient )
 
 public OnClientPutInServer( iClient )
 {
-	if( g_bStarting || g_bGameRunning )
+	if( g_bGameRunning )
 	{
 		g_bDeadPlayers[ iClient ] = true;
-		
-		PrintToChat( iClient, "\x01\x0B\x04[BombGame] \x04You connected while there is a game in progress, you will have to wait." );
 	}
 }
 
@@ -173,6 +171,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	if( iBomber > 0 && IsClientInGame( iBomber ) )
 	{
+		EmitSoundToAll( "ui/beep22.wav" );
+		
 		decl String:szName[ 32 ];
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
@@ -281,9 +281,9 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	{
 		PrintToChatAll( "Setting death weapon to c4" );
 		
-		SetEventString( hEvent, "weapon", "c4" );
+		//SetEventString( hEvent, "weapon", "c4" );
 		
-		return Plugin_Changed;
+		//return Plugin_Changed;
 	}
 	else if( g_bDeadPlayers[ iClient ] )
 	{
@@ -302,6 +302,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	if( iClient == g_iCurrentBomber )
 	{
 		g_iCurrentBomber = 0;
+		g_iLastBomber = iClient;
 		
 		g_bDeadPlayers[ iClient ] = true;
 		
@@ -316,31 +317,42 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
+	else
+	{
+		CheckEnoughPlayers( );
+		
+		if( g_bGameRunning )
+		{
+			g_bDeadPlayers[ iClient ] = true;
+		}
+	}
 	
 	new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
 	
 	if( iRagdoll > 0 )
 	{
-		if( g_iLastBomber != iClient && g_bDeadPlayers[ iClient ] )
+		if( g_iLastBomber == iClient )
 		{
-			AcceptEntityInput( iRagdoll, "kill" );
+			g_iLastBomber = 0;
 			
-			return;
-		}
-		
-		new iEntity = CreateEntityByName( "env_entity_dissolver" );
-		
-		if( iEntity > 0 )
-		{
-			new String:szTargetName[ 16 ];
-			Format( szTargetName, sizeof( szTargetName ), "dissolve_%i", iClient );
+			new iEntity = CreateEntityByName( "env_entity_dissolver" );
 			
-			DispatchKeyValue( iRagdoll, "targetname", szTargetName );
-			DispatchKeyValue( iEntity, "target", szTargetName );
-			DispatchKeyValue( iEntity, "dissolvetype", "1" );
-			DispatchKeyValue( iEntity, "magnitude", "5.0" );
-			AcceptEntityInput( iEntity, "Dissolve" );
-			AcceptEntityInput( iEntity, "kill" );
+			if( iEntity > 0 )
+			{
+				new String:szTargetName[ 16 ];
+				Format( szTargetName, sizeof( szTargetName ), "dissolve_%i", iClient );
+				
+				DispatchKeyValue( iRagdoll, "targetname", szTargetName );
+				DispatchKeyValue( iEntity, "target", szTargetName );
+				DispatchKeyValue( iEntity, "dissolvetype", "1" );
+				DispatchKeyValue( iEntity, "magnitude", "5.0" );
+				AcceptEntityInput( iEntity, "Dissolve" );
+				AcceptEntityInput( iEntity, "kill" );
+			}
+			else
+			{
+				AcceptEntityInput( iRagdoll, "kill" );
+			}
 		}
 		else
 		{
@@ -375,6 +387,8 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s\x01 has picked up the bomb!", szName );
+		
+		EmitSoundToAll( "error.wav" );
 	}
 }
 
@@ -453,10 +467,10 @@ CheckEnoughPlayers( )
 		}
 	}
 	
+	ResetGame( );
+	
 	if( iAlive == 0 )
 	{
-		ResetGame( );
-		
 		return;
 	}
 	
@@ -466,7 +480,11 @@ CheckEnoughPlayers( )
 		GetClientName( iLastPlayer, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s was the last person alive, everyone else left or died, resetting the game.", szName );
-		
-		ResetGame( );
 	}
+	else
+	{
+		PrintToChatAll( "What happened here?" );
+	}
+	
+	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 }

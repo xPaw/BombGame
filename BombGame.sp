@@ -34,8 +34,8 @@ public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
 	
-	AddToStringTable( FindStringTable( "soundprecache" ), "*error.wav" );
-	AddToStringTable( FindStringTable( "soundprecache" ), "*ui/beep22.wav" );
+	PrecacheSound( "error.wav" );
+	PrecacheSound( "ui/beep22.wav" );
 }
 
 public OnMapStart( )
@@ -446,6 +446,11 @@ ResetGame( )
 		g_bDeadPlayers[ i ] = false;
 	}
 	
+	if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
+	{
+		SetEntityGravity( g_iCurrentBomber, 1.0 );
+	}
+	
 	g_bStarting = false;
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
@@ -453,6 +458,11 @@ ResetGame( )
 
 CheckEnoughPlayers( )
 {
+	if( !g_bGameRunning )
+	{
+		return;
+	}
+	
 	new iAlive, iLastPlayer, i;
 	
 	for( i = 1; i <= MaxClients; i++ )
@@ -470,10 +480,10 @@ CheckEnoughPlayers( )
 		}
 	}
 	
-	ResetGame( );
-	
 	if( iAlive == 0 )
 	{
+		ResetGame( );
+		
 		return;
 	}
 	
@@ -488,6 +498,8 @@ CheckEnoughPlayers( )
 	{
 		PrintToChatAll( "What happened here?" );
 	}
+	
+	ResetGame( );
 	
 	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 }

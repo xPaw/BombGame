@@ -14,6 +14,7 @@ public Plugin:myinfo =
 new g_bDeadPlayers[ MAXPLAYERS ] = { false, ... };
 new g_bStarting;
 new g_bGameRunning;
+new g_iLastBomber;
 new g_iCurrentBomber;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
@@ -104,11 +105,15 @@ public OnClientPutInServer( iClient )
 	if( g_bStarting || g_bGameRunning )
 	{
 		g_bDeadPlayers[ iClient ] = true;
+		
+		PrintToChat( iClient, "\x01\x0B\x04[BombGame] \x04You connected while there is a game in progress, you will have to wait." );
 	}
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	g_iLastBomber = 0;
+	
 	new iEntity = -1;
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "hostage_entity" ) ) != -1 )
@@ -172,6 +177,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
 		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s has been left with the bomb!", szName );
+		
+		g_iLastBomber = iBomber;
 		
 		g_bDeadPlayers[ iBomber ] = true;
 		
@@ -270,14 +277,15 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	decl String:szName[ 32 ];
-	GetEventString( hEvent, "weapon", szName, 31 );
-	
-	PrintToChatAll( "OnPlayerPreDeath: weapon: %s - current bomber: %i - client: %i", szName, g_iCurrentBomber, iClient );
-	
-	SetEventString( hEvent, "weapon", "c4" );
-	
-	if( g_bDeadPlayers[ iClient ] )
+	if( g_iLastBomber > 0 && g_iLastBomber == iClient )
+	{
+		PrintToChatAll( "Setting death weapon to c4" );
+		
+		SetEventString( hEvent, "weapon", "c4" );
+		
+		return Plugin_Changed;
+	}
+	else if( g_bDeadPlayers[ iClient ] )
 	{
 		return Plugin_Handled;
 	}
@@ -330,7 +338,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			DispatchKeyValue( iRagdoll, "targetname", szTargetName );
 			DispatchKeyValue( iEntity, "target", szTargetName );
 			DispatchKeyValue( iEntity, "dissolvetype", "1" );
-			DispatchKeyValue( iEntity, "magnitude", "2.0" );
+			DispatchKeyValue( iEntity, "magnitude", "10.0" );
 			AcceptEntityInput( iEntity, "Dissolve" );
 			AcceptEntityInput( iEntity, "kill" );
 		}

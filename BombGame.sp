@@ -25,6 +25,7 @@ public OnPluginStart( )
 	HookEvent( "bomb_pickup",      OnBombPickup );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
 	HookEvent( "player_death",     OnPlayerDeath );
+	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 }
 
@@ -73,6 +74,8 @@ public OnMapEnd( )
 		
 		g_hTimer = INVALID_HANDLE;
 	}
+	
+	ResetGame( );
 }
 
 public OnClientDisconnect( iClient )
@@ -89,6 +92,18 @@ public OnClientDisconnect( iClient )
 		EndRound( );
 		
 		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
+	}
+	else
+	{
+		CheckEnoughPlayers( );
+	}
+}
+
+public OnClientPutInServer( iClient )
+{
+	if( g_bStarting || g_bGameRunning )
+	{
+		g_bDeadPlayers[ iClient ] = true;
 	}
 }
 
@@ -226,6 +241,8 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bDeadPlayers[ iClient ] )
 	{
+		PrintToChat( iClient, "\x01\x0B\x04[BombGame] \x04You can't play this round!" );
+		
 		ForcePlayerSuicide( iClient );
 		
 		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
@@ -247,6 +264,25 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		ServerCommand( "exec BombGame.cfg" );
 	}
+}
+
+public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	decl String:szName[ 32 ];
+	GetEventString( hEvent, "weapon", szName, 31 );
+	
+	PrintToChatAll( "OnPlayerPreDeath: weapon: %s - current bomber: %i - client: %i", szName, g_iCurrentBomber, iClient );
+	
+	SetEventString( hEvent, "weapon", "c4" );
+	
+	if( g_bDeadPlayers[ iClient ] )
+	{
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
 }
 
 public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -277,6 +313,13 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( iRagdoll > 0 )
 	{
+		if( g_bDeadPlayers[ iClient ] )
+		{
+			AcceptEntityInput( iRagdoll, "kill" );
+			
+			return;
+		}
+		
 		new iEntity = CreateEntityByName( "env_entity_dissolver" );
 		
 		if( iEntity > 0 )
@@ -284,18 +327,15 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			new String:szTargetName[ 16 ];
 			Format( szTargetName, sizeof( szTargetName ), "dissolve_%i", iClient );
 			
-			PrintToChatAll( "Created env_entity_dissolver: %s", szTargetName );
-			
 			DispatchKeyValue( iRagdoll, "targetname", szTargetName );
 			DispatchKeyValue( iEntity, "target", szTargetName );
-			DispatchKeyValue( iEntity, "dissolvetype", "3" );
+			DispatchKeyValue( iEntity, "dissolvetype", "1" );
+			DispatchKeyValue( iEntity, "magnitude", "2.0" );
 			AcceptEntityInput( iEntity, "Dissolve" );
 			AcceptEntityInput( iEntity, "kill" );
 		}
 		else
 		{
-			PrintToChatAll( "Failed to create env_entity_dissolver" );
-			
 			AcceptEntityInput( iRagdoll, "kill" );
 		}
 	}
@@ -372,4 +412,53 @@ IsEnoughPlayersToPlay( )
 	}
 	
 	return false;
+}
+
+ResetGame( )
+{
+	for( new i = 1; i <= MaxClients; i++ )
+	{
+		g_bDeadPlayers[ i ] = false;
+	}
+	
+	g_bStarting = false;
+	g_bGameRunning = false;
+	g_iCurrentBomber = 0;
+}
+
+CheckEnoughPlayers( )
+{
+	new iAlive, iLastPlayer, i;
+	
+	for( i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
+		{
+			iAlive++;
+			
+			if( iAlive > 1 )
+			{
+				return;
+			}
+			
+			iLastPlayer = i;
+		}
+	}
+	
+	if( iAlive == 0 )
+	{
+		ResetGame( );
+		
+		return;
+	}
+	
+	if( iLastPlayer == g_iCurrentBomber )
+	{
+		decl String:szName[ 32 ];
+		GetClientName( iLastPlayer, szName, sizeof( szName ) );
+		
+		PrintToChatAll( "\x01\x0B\x04[BombGame] \x02%s was the last person alive, everyone else left or died, resetting the game.", szName );
+		
+		ResetGame( );
+	}
 }

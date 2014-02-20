@@ -35,6 +35,19 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
+	
+	AddNormalSoundHook( OnNormalSound );
+	AddAmbientSoundHook( OnAmbientSound );
+}
+
+public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
+{
+	PrintToChatAll( "OnNormalSound: %s (from entity %i)", sample, entity );
+}
+
+public Action:OnAmbientSound( String:sample[ PLATFORM_MAX_PATH ], &entity, &Float:volume, &level, &pitch, Float:pos[3], &flags, &Float:delay )
+{
+	PrintToChatAll( "OnAmbientSound: %s (from entity %i)", sample, entity );
 }
 
 public OnConfigsExecuted( )
@@ -42,11 +55,12 @@ public OnConfigsExecuted( )
 	ServerCommand( "exec BombGame.cfg" );
 	
 	AddFileToDownloadsTable( "sound/misc/bombgame_countdown.mp3" );
-	AddToStringTable( FindStringTable( "soundprecache" ), "*misc/bombgame_countdown.mp3" );
 	
 	PrecacheSound( "error.wav" );
 	PrecacheSound( "ui/beep22.wav" );
 	PrecacheSound( "misc/bombgame_countdown.mp3" );
+	
+	AddToStringTable( FindStringTable( "soundprecache" ), "*misc/bombgame_countdown.mp3" );
 }
 
 public OnMapStart( )
@@ -163,8 +177,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
-			
-			HideRadar( i );
 		}
 	}
 	
@@ -177,6 +189,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		g_iCurrentBomber = g_iPreviousBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
+		
+		FakeClientCommand( g_iCurrentBomber, "use weapon_c4" );
 		
 		SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", BOMBER_SPEED );
 		SetEntityGravity( g_iCurrentBomber, BOMBER_GRAVITY );
@@ -191,7 +205,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
-		g_hTimerSound = CreateTimer( g_flRoundTime - 12.0, OnRoundSoundTimer );
+		g_hTimerSound = CreateTimer( g_flRoundTime - 10.0, OnRoundSoundTimer );
 	}
 }
 
@@ -294,6 +308,8 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		return;
 	}
 	
+	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ) );
+	
 	//SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 	
@@ -307,6 +323,16 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 }
 
+public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
+{
+	new iClient = GetClientFromSerial( iSerial );
+	
+	if( iClient && IsPlayerAlive( iClient ) )
+	{
+		HideRadar( iClient );
+	}
+}
+
 public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
@@ -315,7 +341,7 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	{
 		PrintToChatAll( "Setting death weapon to c4" );
 		
-		SetEventString( hEvent, "weapon", "incgrenade" );
+		SetEventString( hEvent, "weapon", "hegrenade" );
 		
 		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
 		{

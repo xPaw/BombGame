@@ -33,6 +33,9 @@ public OnPluginStart( )
 public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
+	
+	AddToStringTable( FindStringTable( "soundprecache" ), "*error.wav" );
+	AddToStringTable( FindStringTable( "soundprecache" ), "*ui/beep22.wav" );
 }
 
 public OnMapStart( )

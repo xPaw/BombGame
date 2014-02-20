@@ -213,7 +213,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
-		g_hTimerSound = CreateTimer( g_flRoundTime - 3.0, OnRoundSoundTimer );
+		g_hTimerSound = CreateTimer( g_flRoundTime - 6.0, OnRoundSoundTimer );
 	}
 }
 
@@ -221,6 +221,13 @@ public Action:OnRoundSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
+	EmitSoundToAll( "training/countdown.wav" );
+	
+	CreateTimer( 3.0, OnRoundSoundTimer2 );
+}
+
+public Action:OnRoundSoundTimer( Handle:hTimer )
+{
 	EmitSoundToAll( "training/countdown.wav" );
 }
 

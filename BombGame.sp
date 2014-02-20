@@ -40,9 +40,15 @@ public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
 	
-	PrecacheSound( "error.wav" );
-	PrecacheSound( "ui/beep22.wav" );
-	PrecacheSound( "misc/bombgame_countdown.wav" );
+	new stringTable = FindStringTable( "soundprecache" );
+	
+	AddFileToDownloadsTable( "sound/misc/bombgame_countdown.wav" );
+	AddFileToDownloadsTable( "sound/error.wav" );
+	AddFileToDownloadsTable( "sound/ui/beep22.wav" );
+	
+	AddToStringTable( stringTable, "*misc/bombgame_countdown.wav" );
+	AddToStringTable( stringTable, "*error.wav" );
+	AddToStringTable( stringTable, "*ui/beep22.wav" );
 }
 
 public OnMapStart( )

@@ -321,7 +321,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( iRagdoll > 0 )
 	{
-		if( g_bDeadPlayers[ iClient ] )
+		if( g_iLastBomber != iClient && g_bDeadPlayers[ iClient ] )
 		{
 			AcceptEntityInput( iRagdoll, "kill" );
 			
@@ -338,7 +338,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			DispatchKeyValue( iRagdoll, "targetname", szTargetName );
 			DispatchKeyValue( iEntity, "target", szTargetName );
 			DispatchKeyValue( iEntity, "dissolvetype", "1" );
-			DispatchKeyValue( iEntity, "magnitude", "10.0" );
+			DispatchKeyValue( iEntity, "magnitude", "5.0" );
 			AcceptEntityInput( iEntity, "Dissolve" );
 			AcceptEntityInput( iEntity, "kill" );
 		}

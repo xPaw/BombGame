@@ -25,9 +25,20 @@ new g_iPreviousBomber;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
+new Handle:g_hBlockedSounds;
 
 public OnPluginStart( )
 {
+	g_hBlockedSounds = CreateTrie();
+	
+	SetTrieValue( g_hBlockedSounds, "items/itempickup.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "player/death1.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "player/death2.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "player/death3.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "player/death4.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "player/death5.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "player/death6.wav", 1 );
+	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
@@ -37,17 +48,25 @@ public OnPluginStart( )
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
 	AddNormalSoundHook( OnNormalSound );
-	AddAmbientSoundHook( OnAmbientSound );
 }
 
 public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
 {
-	PrintToChatAll( "OnNormalSound: %s (from entity %i)", sample, entity );
-}
-
-public Action:OnAmbientSound( String:sample[ PLATFORM_MAX_PATH ], &entity, &Float:volume, &level, &pitch, Float:pos[3], &flags, &Float:delay )
-{
-	PrintToChatAll( "OnAmbientSound: %s (from entity %i)", sample, entity );
+	new dummy;
+	
+	if( GetTrieValue( g_hBlockedSounds, sample, dummy ) )
+	{
+		PrintToChatAll( "Blocking sound: %s (from entity %i)", sample, entity );
+		
+		return Plugin_Handled;
+	}
+	
+	if( !StrContains( sample, "footsteps" ) && !StrContains( sample, "player/land" ) )
+	{
+		PrintToChatAll( "Sound: %s", sample );
+	}
+	
+	return Plugin_Continue;
 }
 
 public OnConfigsExecuted( )

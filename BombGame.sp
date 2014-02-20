@@ -46,6 +46,7 @@ public OnConfigsExecuted( )
 	
 	PrecacheSound( "error.wav" );
 	PrecacheSound( "ui/beep22.wav" );
+	PrecacheSound( "misc/bombgame_countdown.mp3" );
 }
 
 public OnMapStart( )
@@ -275,8 +276,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	{
 		CS_TerminateRound( flDelay, CSRoundEnd_TargetBombed );
 	}
-	
-	CS_SetTeamScore( CS_TEAM_T, CS_GetTeamScore( CS_TEAM_T ) + 1 );
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -305,10 +304,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 The game is starting..." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
-		
-		CS_SetTeamScore( CS_TEAM_T, 0 );
-		
-		ServerCommand( "exec BombGame.cfg" );
 	}
 }
 
@@ -320,8 +315,7 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	{
 		PrintToChatAll( "Setting death weapon to c4" );
 		
-		SetEventString( hEvent, "weapon", "c4" );
-		SetEventInt( hEvent, "penetrated", 1 );
+		SetEventString( hEvent, "weapon", "incgrenade" );
 		
 		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
 		{

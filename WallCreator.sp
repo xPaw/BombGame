@@ -1293,12 +1293,11 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 5);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
 
-	// Make the zone visible by removing EF_NODRAW flag
-	//new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
-	//m_fEffects |= 32;
-	//SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
+	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
+	m_fEffects |= 32;
+	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
 }
 
 /* KillZone()

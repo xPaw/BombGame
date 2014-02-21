@@ -3,7 +3,8 @@
 #include < cstrike >
 
 #define PREFIX            " \x01\x0B\x04[Wall Creator]\x01"
-#define ZONES_MODEL       "models/error.mdl" // This model exists in any source game
+//#define ZONES_MODEL       "models/error.mdl"
+#define ZONES_MODEL       "models/props/cs_office/vending_machine.mdl"
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
@@ -1242,13 +1243,12 @@ SpawnZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME,     ZoneName, sizeof(ZoneName));
 
 	// Create a zone (best entity for that is trigger_multiple)
-	new zone = CreateEntityByName("trigger_multiple");
+	new zone = CreateEntityByName("func_wall");
 
 	// Set name
-	Format(ZoneName, sizeof(ZoneName), "sm_zone %s", ZoneName);
+	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
 	DispatchKeyValue(zone, "spawnflags", "64");
-	DispatchKeyValue(zone, "wait",       "0");
 
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1298,7 +1298,7 @@ SpawnZone(zoneIndex)
 
 	// Make the zone visible by removing EF_NODRAW flag
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
-	m_fEffects |= 0x020;
+	m_fEffects |= 32;
 	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
 }
 
@@ -1315,7 +1315,7 @@ KillZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME, ZoneName, sizeof(ZoneName));
 
 	zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "trigger_multiple")) != INIT)
+	while ((zone = FindEntityByClassname(zone, "func_wall")) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

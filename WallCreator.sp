@@ -58,7 +58,7 @@ new	LaserMaterial,
 public Plugin:myinfo =
 {
 	name        = "Wall Creator",
-	author      = "Root (based on \"Anti Rush\" plugin by Jannik 'Peace-Maker' Hartung)",
+	author      = "Root, slightly edited by xPaw",
 	description = "Defines map zones where players are not allowed to enter",
 	version     = "1.0",
 	url         = "http://www.dodsplugins.com/, http://www.wcfan.de/"
@@ -81,12 +81,10 @@ public Plugin:myinfo =
  * -------------------------------------------------------------------------- */
 public OnPluginStart()
 {
-	show_zones       = CreateConVar("sm_zones_show",           "0", "Whether or not show the zones on a map all the times", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	show_zones       = CreateConVar("bombgame_show_walls", "0", "Whether or not show the zones on a map all the times", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 
 	// Register admin commands to control zones
-	RegAdminCmd("sm_zones",     Command_SetupZones,     ADMFLAG_CONFIG, "Opens the zones main menu");
-	RegAdminCmd("sm_actzone",   Command_ActivateZone,   ADMFLAG_CONFIG, "Activates a zone (by name)");
-	RegAdminCmd("sm_diactzone", Command_DiactivateZone, ADMFLAG_CONFIG, "Diactivates a zone (by name)");
+	RegAdminCmd("bombgame_walls",     Command_SetupZones,     ADMFLAG_CONFIG, "Opens the zones main menu");
 
 	PREFIX = " \x01\x0B\x04[Wall Creator]\x01";
 
@@ -357,48 +355,6 @@ public Action:Command_SetupZones(client, args)
 	return Plugin_Handled;
 }
 
-/* Command_ActivateZone()
- *
- * Activates an inactive zone.
- * -------------------------------------------------------------------------- */
-public Action:Command_ActivateZone(client, args)
-{
-	// Once again check if server was used this command
-	if (!client && args == 1)
-	{
-		decl String:text[MAX_ZONE_LENGTH];
-		GetCmdArg(1, text, sizeof(text));
-		ActivateZone(text);
-	}
-
-	// Show diactivated zones menu to valid client
-	ShowDiactivatedZonesMenu(client);
-	return Plugin_Handled;
-}
-
-/* Command_DiactivateZone()
- *
- * Diactivates an active zone.
- * Note: It just disabling zones, not killing them at all.
- * -------------------------------------------------------------------------- */
-public Action:Command_DiactivateZone(client, args)
-{
-	// Check whether or not argument (name) is sent
-	if (!client && args == 1)
-	{
-		// If server is used a command, just diactivate zone by name
-		decl String:text[MAX_ZONE_LENGTH];
-		GetCmdArg(1, text, sizeof(text));
-		DiactivateZone(text);
-	}
-
-	ShowActivatedZonesMenu(client);
-
-	// Block the command to prevent showing 'Unknown command' in client's console
-	return Plugin_Handled;
-}
-
-
 /**
  * --------------------------------------------------------------------------
  *      __  ___
@@ -439,13 +395,6 @@ ShowZonesMainMenu(client)
 	Format(translation, sizeof(translation), "%T\n \n", "Active Zones", client);
 	AddMenuItem(menu, "active_zones", translation);
 
-	// Also add Activate/Diactivate zone items
-	Format(translation, sizeof(translation), "%T", "Activate Zones", client);
-	AddMenuItem(menu, "activate_zones", translation);
-
-	Format(translation, sizeof(translation), "%T", "Diactivate Zones", client);
-	AddMenuItem(menu, "diactivate_zones", translation);
-
 	// Add exit button, and display menu as long as possible
 	SetMenuExitButton(menu, true);
 	DisplayMenu(menu, client, MENU_TIME_FOREVER);
@@ -478,19 +427,6 @@ public Menu_Zones(Handle:menu, MenuAction:action, client, param)
 		else if (StrEqual(info, "active_zones", false))
 		{
 			ShowActiveZonesMenu(client);
-		}
-
-		// Nope, that was 'Activate zones' item
-		else if (StrEqual(info, "activate_zones", false))
-		{
-			ShowDiactivatedZonesMenu(client);
-		}
-
-		// If not - then its a lates one, I believe
-		else if (StrEqual(info, "diactivate_zones", false))
-		{
-			// Diactivate zones
-			ShowActivatedZonesMenu(client);
 		}
 	}
 	else if (action == MenuAction_End)
@@ -562,123 +498,6 @@ public Menu_ActiveZones(Handle:menu, MenuAction:action, client, param)
 		case MenuAction_End: CloseHandle(menu);
 	}
 }
-
-
-/* ShowActivateZonesMenuMenu()
- *
- * Creates a menu handler to setup diactivated zones.
- * -------------------------------------------------------------------------- */
-ShowActivatedZonesMenu(client)
-{
-	new Handle:menu = CreateMenu(Menu_ActivatedZones);
-	SetMenuTitle(menu, "%T:", "Diactivated Zones", client);
-
-	// Initialize classname string and the zone to search
-	decl String:class[MAX_ZONE_LENGTH], zone; zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "trigger_multiple")) != INIT)
-	{
-		if (IsValidEntity(zone) && !GetEntProp(zone, Prop_Data, "m_bDisabled") // Dont add diactivated zones
-		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class))
-		&& strncmp(class, "sm_zone", 7) == 0)
-		{
-			// Set menu title and item info same as m_iName without sm_zone prefix
-			AddMenuItem(menu, class[8], class[8]);
-		}
-	}
-
-	SetMenuExitBackButton(menu, true);
-	DisplayMenu(menu, client, MENU_TIME_FOREVER);
-}
-
-/* Menu_ActivatedZones()
- *
- * Menu handler to diactivate a zone.
- * -------------------------------------------------------------------------- */
-public Menu_ActivatedZones(Handle:menu, MenuAction:action, client, param)
-{
-	switch (action)
-	{
-		case MenuAction_Select: // When item was selected
-		{
-			decl String:info[MAX_ZONE_LENGTH];
-			GetMenuItem(menu, param, info, sizeof(info));
-
-			// Diactivate zone by info from menu item
-			DiactivateZone(info);
-			ShowActivatedZonesMenu(client);
-		}
-		case MenuAction_Cancel:
-		{
-			if (param == MenuCancel_ExitBack)
-			{
-				// Show zones main menu then
-				ShowZonesMainMenu(client);
-			}
-		}
-		case MenuAction_End: CloseHandle(menu);
-	}
-}
-
-
-/* ShowDiactivatedZonesMenu()
- *
- * Creates a menu handler to setup activated zones.
- * -------------------------------------------------------------------------- */
-ShowDiactivatedZonesMenu(client)
-{
-	new Handle:menu = CreateMenu(Menu_DiactivatedZones);
-	SetMenuTitle(menu, "%T:", "Activated Zones", client);
-
-	// Search for any zones on a map
-	decl String:class[MAX_ZONE_LENGTH], zone; zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "trigger_multiple")) != INIT)
-	{
-		// If we found a zone, make sure its diactivated
-		if (IsValidEntity(zone) && GetEntProp(zone, Prop_Data, "m_bDisabled")
-		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class))
-		&& strncmp(class, "sm_zone", 7) == 0) // Does name contains 'sm_zone' prefix?
-		{
-			// Add every disabled zone into diactivated menu
-			AddMenuItem(menu, class[8], class[8]);
-		}
-	}
-
-	SetMenuExitBackButton(menu, true);
-
-	// Display menu as long as possible
-	DisplayMenu(menu, client, MENU_TIME_FOREVER);
-}
-
-/* Menu_DiactivatedZones()
- *
- * Menu handler to activate diactivated zones.
- * -------------------------------------------------------------------------- */
-public Menu_DiactivatedZones(Handle:menu, MenuAction:action, client, param)
-{
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			decl String:info[MAX_ZONE_LENGTH];
-			GetMenuItem(menu, param, info, sizeof(info));
-
-			// Otherwise activate a zone
-			ActivateZone(info);
-			ShowDiactivatedZonesMenu(client);
-		}
-
-		// When menu was cancelled, re-draw main menu (because there may be no diactivated items)
-		case MenuAction_Cancel:
-		{
-			if (param == MenuCancel_ExitBack)
-			{
-				ShowZonesMainMenu(client);
-			}
-		}
-		case MenuAction_End: CloseHandle(menu);
-	}
-}
-
 
 /* ShowZoneOptionsMenu()
  *
@@ -1406,47 +1225,6 @@ ParseZoneConfig()
 
 		// And close KeyValues handler
 		CloseHandle(kv);
-	}
-}
-
-/* ActivateZone()
- *
- * Activates an inactive zone by name.
- * -------------------------------------------------------------------------- */
-ActivateZone(const String:text[])
-{
-	// Make sure at least one zone entity is exists
-	decl String:class[MAX_ZONE_LENGTH+9], zone; zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "trigger_multiple")) != INIT)
-	{
-		if (IsValidEntity(zone)
-		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class))
-		&& StrEqual(class[8], text, false)) // Skip first 8 characters to avoid comparing with 'sm_zone' prefix
-		{
-			// Found - activate a zone and break the loop (optimizations)
-			AcceptEntityInput(zone, "Enable");
-			break;
-		}
-	}
-}
-
-/* DiactivateZone()
- *
- * Diactivates a zone by name.
- * -------------------------------------------------------------------------- */
-DiactivateZone(const String:text[])
-{
-	decl String:class[MAX_ZONE_LENGTH+9], zone; zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "trigger_multiple")) != INIT)
-	{
-		if (IsValidEntity(zone)
-		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class))
-		&& StrEqual(class[8], text, false))
-		{
-			// Retrieve names of every entity, and if name contains "sm_zone" text - just disable this entity
-			AcceptEntityInput(zone, "Disable");
-			break;
-		}
 	}
 }
 

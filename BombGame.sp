@@ -52,7 +52,23 @@ public OnPluginStart( )
 	
 	AddNormalSoundHook( OnNormalSound );
 	
+	new iEntity = -1, String:szZoneName[ 9 ];
+	
+	// Remove all bomb sites
+	while( ( iEntity = FindEntityByClassname( iEntity, "func_wall" ) ) != -1 )
+	{
+		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szZoneName, sizeof( szZoneName ) ) && StrEqual( szZoneName, "sm_zone_" ) )
+		{
+			HookSingleEntityOutput( iEntity, "OnStartTouch", OnInvisibleWallTouch );
+		}
+	}
+	
 	ServerCommand( "mp_restartgame 1" );
+}
+
+public OnInvisibleWallTouch(const String:output[], caller, activator, Float:delay)
+{
+	PrintToChatAll( "OnInvisibleWallTouch: %i - %i - %s", caller, activator, output );
 }
 
 public Action:OnShowFreezePanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

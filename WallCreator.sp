@@ -1243,7 +1243,7 @@ SpawnZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME,     ZoneName, sizeof(ZoneName));
 
 	// Create a zone (best entity for that is trigger_multiple)
-	new zone = CreateEntityByName("prop_dynamic");
+	new zone = CreateEntityByName("func_wall");
 
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
@@ -1256,9 +1256,6 @@ SpawnZone(zoneIndex)
 
 	// Since its brush entity, use ActivateEntity as well
 	ActivateEntity(zone);
-
-	// Set datamap spawnflags (value means copy origin and angles)
-	SetEntProp(zone, Prop_Data, "m_spawnflags", 64);
 
 	// Get the middle of zone
 	GetMiddleOfABox(m_vecMins, m_vecMaxs, middle);
@@ -1297,12 +1294,11 @@ SpawnZone(zoneIndex)
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 5);
-	SetEntProp(zone, Prop_Data, "m_usSolidFlags", 16);
 
 	// Make the zone visible by removing EF_NODRAW flag
-	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
-	m_fEffects |= 32;
-	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
+	//new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
+	//m_fEffects |= 32;
+	//SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
 }
 
 /* KillZone()
@@ -1318,7 +1314,7 @@ KillZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME, ZoneName, sizeof(ZoneName));
 
 	zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "prop_dynamic")) != INIT)
+	while ((zone = FindEntityByClassname(zone, "func_wall")) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

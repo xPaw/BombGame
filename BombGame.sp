@@ -57,7 +57,11 @@ public OnPluginStart( )
 	// Remove all bomb sites
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_wall" ) ) != -1 )
 	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szZoneName, sizeof( szZoneName ) ) && StrEqual( szZoneName, "sm_zone_" ) )
+		GetEntPropString( iEntity, Prop_Data, "m_iName", szZoneName, sizeof( szZoneName ) );
+		
+		PrintToChatAll( "wall: %i - %s", iEntity, szZoneName );
+		
+		if( StrEqual( szZoneName, "sm_zone_" ) )
 		{
 			HookSingleEntityOutput( iEntity, "OnStartTouch", OnInvisibleWallTouch );
 		}

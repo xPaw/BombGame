@@ -372,6 +372,10 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 	if( iClient && IsPlayerAlive( iClient ) )
 	{
 		HideRadar( iClient );
+		
+		PrintToChat( iClient, "m_bHud_MiniScoreHidden: %i", GetEntProp( iClient, Prop_Data, "m_bHud_MiniScoreHidden" ) );
+		PrintToChat( iClient, "m_bHud_RadarHidden: %i", GetEntProp( iClient, Prop_Data, "m_bHud_RadarHidden" ) );
+		PrintToChat( iClient, "m_nDeathCamMusic: %i", GetEntProp( iClient, Prop_Data, "m_nDeathCamMusic" ) );
 	}
 }
 
@@ -407,6 +411,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	
 	ShowRadar( iClient );
+	
+	PrintToChat( iClient, "OnPlayerDeath: m_nDeathCamMusic: %i", GetEntProp( iClient, Prop_Data, "m_nDeathCamMusic" ) );
 	
 	if( iClient == g_iCurrentBomber )
 	{

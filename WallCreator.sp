@@ -37,8 +37,7 @@ enum
 }
 
 // ====[ VARIABLES ]=========================================================
-new	Handle:ZonesArray       = INVALID_HANDLE,
-	Handle:show_zones       = INVALID_HANDLE;
+new	Handle:ZonesArray       = INVALID_HANDLE;
 
 // ====[ ARRAYS ]============================================================
 new	EditingZone[MAXPLAYERS + 1]           = { INIT,     ... },
@@ -82,8 +81,6 @@ public Plugin:myinfo =
  * -------------------------------------------------------------------------- */
 public OnPluginStart()
 {
-	show_zones       = CreateConVar("bombgame_show_walls", "0", "Whether or not show the walls on a map all the times", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-
 	// Register admin commands to control zones
 	RegAdminCmd("bombgame_walls", Command_SetupZones, ADMFLAG_CONFIG, "Opens the walls main menu");
 
@@ -1154,7 +1151,7 @@ public Action:Timer_ShowZones(Handle:timer)
 			if (IsClientInGame(client))
 			{
 				// If player is editing a zones - show all zones then
-				if (EditingZone[client] != INIT || GetConVarBool(show_zones))
+				if (EditingZone[client] != INIT)
 				{
 					TE_SendBeamBoxToClient(client, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 5.0, 5.0, 2, 1.0, { 0, 127, 255, 255 }, 0);
 				}
@@ -1248,8 +1245,7 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "spawnflags", "64");
-	DispatchKeyValue(zone, "disableshadows", "1");
+	DispatchKeyValue(zone, "DisableShadow", "1");
 
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1292,8 +1288,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
+	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 32;

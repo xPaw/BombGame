@@ -2,6 +2,7 @@
 #include < sdktools >
 #include < cstrike >
 
+#define PREFIX            " \x01\x0B\x04[Wall Creator]\x01"
 #define ZONES_MODEL       "models/error.mdl" // This model exists in any source game
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
@@ -51,8 +52,7 @@ new	EditingZone[MAXPLAYERS + 1]           = { INIT,     ... },
 new	LaserMaterial,
 	HaloMaterial,
 	GlowSprite,
-	String:map[64],
-	String:PREFIX[32];
+	String:map[64];
 
 // ====[ PLUGIN ]============================================================
 public Plugin:myinfo =
@@ -81,16 +81,15 @@ public Plugin:myinfo =
  * -------------------------------------------------------------------------- */
 public OnPluginStart()
 {
-	show_zones       = CreateConVar("bombgame_show_walls", "0", "Whether or not show the zones on a map all the times", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	show_zones       = CreateConVar("bombgame_show_walls", "0", "Whether or not show the walls on a map all the times", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 
 	// Register admin commands to control zones
-	RegAdminCmd("bombgame_walls",     Command_SetupZones,     ADMFLAG_CONFIG, "Opens the zones main menu");
-
-	PREFIX = " \x01\x0B\x04[Wall Creator]\x01";
+	RegAdminCmd("bombgame_walls", Command_SetupZones, ADMFLAG_CONFIG, "Opens the walls main menu");
 
 	// Load some plugin translations
 	LoadTranslations("common.phrases");
 	LoadTranslations("playercommands.phrases");
+	LoadTranslations("sm_zones.phrases");
 
 	// Create a zones array
 	ZonesArray = CreateArray();

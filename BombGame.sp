@@ -2,7 +2,6 @@
 #include < sdktools >
 #include < cstrike >
 
-#define HIDEHUD_HEALTH ( 1 << 3 )
 #define HIDEHUD_RADAR  ( 1 << 12 )
 
 #define BOMBER_SPEED   1.25
@@ -43,7 +42,6 @@ public OnPluginStart( )
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
-	HookEvent( "bomb_dropped",     OnBombDropped, EventHookMode_Pre );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
@@ -491,24 +489,6 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	}
 }
 
-public Action:OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
-	
-	if( IsPlayerAlive( iClient ) )
-	{
-		PrintToChatAll( "%i dropped the bomb (current bomber: %i)", iClient, g_iCurrentBomber );
-		
-		return Plugin_Changed;
-	}
-	else
-	{
-		PrintToChatAll( "%i dropped the bomb and he is not alive!! (current bomber: %i)", iClient, g_iCurrentBomber );
-	}
-	
-	return Plugin_Continue;
-}
-
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
@@ -630,7 +610,7 @@ CheckEnoughPlayers( )
 
 HideRadar( iClient )
 {
-	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) | HIDEHUD_RADAR | HIDEHUD_HEALTH );
+	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) | HIDEHUD_RADAR );
 }
 
 ShowRadar( iClient )

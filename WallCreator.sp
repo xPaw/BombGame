@@ -1,8 +1,9 @@
 #include < sourcemod >
 #include < sdktools >
 #include < cstrike >
+#include < collisionhook >
 
-#define PREFIX            " \x01\x0B\x04[Wall Creator]\x01"
+#define PREFIX            " \x01\x0B\x04[Wall Creator]\x01 "
 //#define ZONES_MODEL       "models/error.mdl"
 #define ZONES_MODEL       "models/props/cs_office/vending_machine.mdl"
 #define INIT              -1
@@ -1245,7 +1246,6 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "DisableShadow", "1");
 
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1288,7 +1288,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 32;
@@ -1330,6 +1330,11 @@ KillZone(zoneIndex)
  *
  * --------------------------------------------------------------------------
 */
+
+public bool:ShouldCollide( entity, collisiongroup, contentsmask, bool:result )
+{
+	PrintToChatAll( "ShouldCollide: entity: %i - collisiongroup: %i", entity, collisiongroup );
+} 
 
 /* CloseHandleArray()
  *

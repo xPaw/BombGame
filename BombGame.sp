@@ -42,19 +42,45 @@ public OnPluginStart( )
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
+	HookEvent( "bomb_dropped",     OnBombDropped, EventHookMode_Pre );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
+	HookEvent( "show_freezepanel",  OnShowFreezePanel );
+	HookEvent( "hide_freezepanel",  OnHideFreezePanel );
+	HookEvent( "player_given_c4",  OnPlayerGivenC4 );
+	
 	AddNormalSoundHook( OnNormalSound );
+	
+	ServerCommand( "mp_restartgame 1" );
+}
+
+public Action:OnShowFreezePanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "victim" ) );
+	
+	PrintToChatAll( "OnShowFreezePanel: victim: %i - killer: %i (current bomber: %i - last bomber: %i)", iClient, GetClientOfUserId( GetEventInt( hEvent, "killer" ) ), g_iCurrentBomber, g_iLastBomber );
+}
+
+public Action:OnHideFreezePanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	PrintToChatAll( "OnHideFreezePanel: ??" );
+}
+
+public Action:OnPlayerGivenC4( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	PrintToChatAll( "OnPlayerGivenC4: userid: %i - current bomber: %i", iClient, g_iCurrentBomber );
 }
 
 public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
 {
 	new dummy;
 	
-	if( !StrContains( sample, "footsteps" ) )
+	if( StrContains( sample, "footsteps" ) == -1 )
 	{
 		PrintToChatAll( "Sound: %s", sample );
 	}
@@ -212,8 +238,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
-		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd );
-		g_hTimerSound = CreateTimer( g_flRoundTime - 6.0, OnRoundSoundTimer );
+		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd, _, TIMER_FLAG_NO_MAPCHANGE );
+		g_hTimerSound = CreateTimer( g_flRoundTime - 3.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 	}
 }
 
@@ -223,12 +249,13 @@ public Action:OnRoundSoundTimer( Handle:hTimer )
 	
 	EmitSoundToAll( "training/countdown.wav" );
 	
-	CreateTimer( 3.0, OnRoundSoundTimer2 );
-}
-
-public Action:OnRoundSoundTimer2( Handle:hTimer )
-{
-	EmitSoundToAll( "training/countdown.wav" );
+	// test
+	if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
+	{
+		new Handle:hBeep = CreateEvent( "bomb_beep" );
+		SetEventInt( hBeep, "entindex", g_iCurrentBomber );
+		FireEvent( hBeep );
+	}
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )
@@ -323,7 +350,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		return;
 	}
 	
-	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ) );
+	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 	
 	//SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
@@ -477,6 +504,24 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		EmitSoundToAll( "error.wav", iClient );
 	}
+}
+
+public Action:OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	if( IsPlayerAlive( iClient ) )
+	{
+		PrintToChatAll( "%i dropped the bomb (current bomber: %i)", iClient, g_iCurrentBomber );
+		
+		return Plugin_Changed;
+	}
+	else
+	{
+		PrintToChatAll( "%i dropped the bomb and he is not alive!! (current bomber: %i)", iClient, g_iCurrentBomber );
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

@@ -2,7 +2,8 @@
 #include < sdktools >
 #include < cstrike >
 
-#define HIDEHUD_RADAR ( 1 << 12 )
+#define HIDEHUD_HEALTH ( 1 << 3 )
+#define HIDEHUD_RADAR  ( 1 << 12 )
 
 #define BOMBER_SPEED   1.25
 #define BOMBER_GRAVITY 0.75
@@ -50,7 +51,6 @@ public OnPluginStart( )
 	
 	HookEvent( "show_freezepanel",  OnShowFreezePanel );
 	HookEvent( "hide_freezepanel",  OnHideFreezePanel );
-	HookEvent( "player_given_c4",  OnPlayerGivenC4 );
 	
 	AddNormalSoundHook( OnNormalSound );
 	
@@ -69,18 +69,11 @@ public Action:OnHideFreezePanel( Handle:hEvent, const String:szActionName[], boo
 	PrintToChatAll( "OnHideFreezePanel: ??" );
 }
 
-public Action:OnPlayerGivenC4( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
-	
-	PrintToChatAll( "OnPlayerGivenC4: userid: %i - current bomber: %i", iClient, g_iCurrentBomber );
-}
-
 public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
 {
 	new dummy;
 	
-	if( StrContains( sample, "footsteps" ) == -1 )
+	if( StrContains( sample, "footsteps" ) == -1 && StrContains( sample, "player/land" ) != 0 )
 	{
 		PrintToChatAll( "Sound: %s", sample );
 	}
@@ -637,7 +630,7 @@ CheckEnoughPlayers( )
 
 HideRadar( iClient )
 {
-	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) | HIDEHUD_RADAR );
+	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) | HIDEHUD_RADAR | HIDEHUD_HEALTH );
 }
 
 ShowRadar( iClient )

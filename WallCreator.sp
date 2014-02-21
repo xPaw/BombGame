@@ -1,7 +1,6 @@
 #include < sourcemod >
 #include < sdktools >
 #include < cstrike >
-#include < collisionhook >
 
 #define PREFIX            " \x01\x0B\x04[Wall Creator]\x01 "
 //#define ZONES_MODEL       "models/error.mdl"
@@ -1330,11 +1329,6 @@ KillZone(zoneIndex)
  *
  * --------------------------------------------------------------------------
 */
-
-public bool:ShouldCollide( entity, collisiongroup, contentsmask, bool:result )
-{
-	PrintToChatAll( "ShouldCollide: entity: %i - collisiongroup: %i", entity, collisiongroup );
-} 
 
 /* CloseHandleArray()
  *

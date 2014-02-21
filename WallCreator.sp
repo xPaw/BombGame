@@ -1,20 +1,7 @@
-/**
-* SM Zones by Root
-*
-* Description:
-*   Defines map zones where players are not allowed to enter).
-*
-* Version 1.0
-* Changelog & more info at http://goo.gl/4nKhJ
-*/
+#include < sourcemod >
+#include < sdktools >
+#include < cstrike >
 
-// ====[ INCLUDES ]==========================================================
-#include <cstrike>
-#include <sdktools>
-#undef REQUIRE_PLUGIN
-#include <adminmenu>
-
-// ====[ CONSTANTS ]=========================================================
 #define ZONES_MODEL       "models/error.mdl" // This model exists in any source game
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
@@ -48,8 +35,7 @@ enum
 }
 
 // ====[ VARIABLES ]=========================================================
-new	Handle:AdminMenuHandle  = INVALID_HANDLE,
-	Handle:ZonesArray       = INVALID_HANDLE,
+new	Handle:ZonesArray       = INVALID_HANDLE,
 	Handle:show_zones       = INVALID_HANDLE;
 
 // ====[ ARRAYS ]============================================================
@@ -62,8 +48,7 @@ new	EditingZone[MAXPLAYERS + 1]           = { INIT,     ... },
 	Float:SecondZoneVector[MAXPLAYERS + 1][3];
 
 // ====[ GLOBALS ]===========================================================
-new	bool:bLate,
-	LaserMaterial,
+new	LaserMaterial,
 	HaloMaterial,
 	GlowSprite,
 	String:map[64],
@@ -77,17 +62,6 @@ public Plugin:myinfo =
 	description = "Defines map zones where players are not allowed to enter",
 	version     = "1.0",
 	url         = "http://www.dodsplugins.com/, http://www.wcfan.de/"
-}
-
-
-/* APLRes:AskPluginLoad2()
- *
- * Called before the plugin starts up.
- * ----------------------------------------------------------------- */
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
-{
-	// late-loading support for plugin
-	bLate = late;
 }
 
 /**
@@ -114,19 +88,11 @@ public OnPluginStart()
 	RegAdminCmd("sm_actzone",   Command_ActivateZone,   ADMFLAG_CONFIG, "Activates a zone (by name)");
 	RegAdminCmd("sm_diactzone", Command_DiactivateZone, ADMFLAG_CONFIG, "Diactivates a zone (by name)");
 
-	PREFIX = "\x01[\x04CS:S Zones\x01] >> \x07FFFF00";
+	PREFIX = " \x01\x0B\x04[Wall Creator]\x01";
 
 	// Load some plugin translations
 	LoadTranslations("common.phrases");
 	LoadTranslations("playercommands.phrases");
-	LoadTranslations("sm_zones.phrases");
-
-	// Adminmenu integration when menu is ready
-	new Handle:topmenu = INVALID_HANDLE;
-	if (LibraryExists("adminmenu") && ((topmenu = GetAdminTopMenu()) != INVALID_HANDLE))
-	{
-		OnAdminMenuReady(topmenu);
-	}
 
 	// Create a zones array
 	ZonesArray = CreateArray();
@@ -144,32 +110,6 @@ public OnPluginStart()
 		// After creating a zones folder set its permissions to allow plugin to create/load/edit configs from this directory
 		CreateDirectory(path, FPERM_U_READ|FPERM_U_WRITE|FPERM_U_EXEC|FPERM_G_READ|FPERM_G_EXEC|FPERM_O_READ|FPERM_O_EXEC);
 	}
-}
-
-/* OnAdminMenuReady()
- *
- * Called when the admin menu is ready to have items added.
- * -------------------------------------------------------------------------- */
-public OnAdminMenuReady(Handle:topmenu)
-{
-	// Block menu handle from being called twice
-	if (topmenu == AdminMenuHandle)
-	{
-		return;
-	}
-
-	AdminMenuHandle = topmenu;
-
-	// If the category is third party, it will have its own unique name
-	new TopMenuObject:server_commands = FindTopMenuCategory(AdminMenuHandle, ADMINMENU_SERVERCOMMANDS);
-
-	if (server_commands == INVALID_TOPMENUOBJECT)
-	{
-		return;
-	}
-
-	// Add 'Setup Zones' category to "ServerCommands" menu
-	AddToTopMenu(AdminMenuHandle, "sm_zones", TopMenuObject_Item, AdminMenu_Zones, server_commands, "sm_zones_immunity", ADMFLAG_CONFIG);
 }
 
 /* OnMapStart()
@@ -206,21 +146,6 @@ public OnMapStart()
 
 	// Create global repeatable timer to show zones
 	CreateTimer(LIFETIME_INTERVAL, Timer_ShowZones, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-
-	// Plugin were late loaded
-	if (bLate)
-	{
-		// Yea, so loop through all clients on a server
-		for (new client = 1; client <= MaxClients; client++)
-		{
-			// OnMapStart() is called after plugin reloads, so now we should
-			if (IsClientInGame(client))
-			{
-				// Hook 'em
-				OnClientPutInServer(client);
-			}
-		}
-	}
 }
 
 /* OnClientPutInServer()
@@ -484,21 +409,6 @@ public Action:Command_DiactivateZone(client, args)
  *
  * --------------------------------------------------------------------------
 */
-
-/* AdminMenu_Zones()
- *
- * Shows a "Setup Zones" category in Server Commands menu.
- * -------------------------------------------------------------------------- */
-public AdminMenu_Zones(Handle:topmenu, TopMenuAction:action, TopMenuObject:object_id, param, String:buffer[], maxlength)
-{
-	switch (action)
-	{
-		// A name of the 'ServerCommands' category
-		case TopMenuAction_DisplayOption: Format(buffer, maxlength, "%T", "Setup Zones", param);
-		case TopMenuAction_SelectOption:  ShowZonesMainMenu(param);
-	}
-}
-
 
 /* ShowZonesMainMenu()
  *
@@ -1607,9 +1517,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	// Enable touch functions and set it as non-solid for everything
-	SetEntProp(zone, Prop_Send, "m_usSolidFlags",  152);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 
 	// Make the zone visible by removing EF_NODRAW flag
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");

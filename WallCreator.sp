@@ -1243,12 +1243,13 @@ SpawnZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME,     ZoneName, sizeof(ZoneName));
 
 	// Create a zone (best entity for that is trigger_multiple)
-	new zone = CreateEntityByName("func_wall");
+	new zone = CreateEntityByName("prop_dynamic");
 
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
 	DispatchKeyValue(zone, "spawnflags", "64");
+	DispatchKeyValue(zone, "disableshadows", "1");
 
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1295,6 +1296,8 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 5);
+	SetEntProp(zone, Prop_Data, "m_usSolidFlags", 16);
 
 	// Make the zone visible by removing EF_NODRAW flag
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
@@ -1315,7 +1318,7 @@ KillZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME, ZoneName, sizeof(ZoneName));
 
 	zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "func_wall")) != INIT)
+	while ((zone = FindEntityByClassname(zone, "prop_dynamic")) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

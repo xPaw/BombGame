@@ -24,6 +24,7 @@ new g_iCurrentBomber;
 new g_iPreviousBomber;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
+new bool:g_bIsAssault;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -119,6 +120,12 @@ public OnMapStart( )
 		g_bIsNuke = true;
 		
 		InitializeNuke( );
+	}
+	else if( StrEqual( szMap, "cs_assault", false ) )
+	{
+		g_bIsAssault = true;
+		
+		InitializeAssault( );
 	}
 	
 	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
@@ -646,7 +653,7 @@ RemoveHostages( )
 
 InitializeNuke( )
 {
-	new iEntity = -1, String:szModel[ 64 ];
+	new iEntity = -1, String:szModel[ 42 ];
 	
 	// Remove all doors
 	while( ( iEntity = FindEntityByClassname( iEntity, "prop_door_rotating" ) ) != -1 )
@@ -655,5 +662,25 @@ InitializeNuke( )
 		{
 			AcceptEntityInput( iEntity, "kill" );
 		}
+	}
+}
+
+InitializeAssault( )
+{
+	new iEntity = -1, String:szModel[ 64 ];
+	
+	// Remove all ladders
+	while( ( iEntity = FindEntityByClassname( iEntity, "prop_static" ) ) != -1 )
+	{
+		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) )
+		&& ( StrEqual( szModel, "models/props_equipment/metalladder002.mdl" ) || StrEqual( szModel, "models/props/cs_assault/Ladder_tall.mdl" ) ) )
+		{
+			AcceptEntityInput( iEntity, "kill" );
+		}
+	}
+	
+	while( ( iEntity = FindEntityByClassname( iEntity, "func_ladder" ) ) != -1 )
+	{
+		PrintToChatAll( "Found ladder: %i", iEntity );
 	}
 }

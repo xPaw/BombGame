@@ -47,25 +47,19 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
-	HookEvent( "show_freezepanel",  OnShowFreezePanel );
-	HookEvent( "hide_freezepanel",  OnHideFreezePanel );
-	
 	AddNormalSoundHook( OnNormalSound );
 	
+#if false
 	new iEntity = -1, String:szZoneName[ 9 ];
 	
-	// Remove all bomb sites
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_wall" ) ) != -1 )
 	{
-		GetEntPropString( iEntity, Prop_Data, "m_iName", szZoneName, sizeof( szZoneName ) );
-		
-		PrintToChatAll( "wall: %i - %s", iEntity, szZoneName );
-		
-		if( StrEqual( szZoneName, "sm_zone_" ) )
+		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szZoneName, sizeof( szZoneName ) ) && StrEqual( szZoneName, "sm_zone_" ) )
 		{
 			HookSingleEntityOutput( iEntity, "OnStartTouch", OnInvisibleWallTouch );
 		}
 	}
+#endif
 	
 	ServerCommand( "mp_restartgame 1" );
 }
@@ -73,30 +67,6 @@ public OnPluginStart( )
 public OnInvisibleWallTouch(const String:output[], caller, activator, Float:delay)
 {
 	PrintToChatAll( "OnInvisibleWallTouch: %i - %i - %s", caller, activator, output );
-}
-
-public Action:OnShowFreezePanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	new iClient = GetClientOfUserId( GetEventInt( hEvent, "victim" ) );
-	
-	PrintToChatAll( "OnShowFreezePanel: victim: %i - killer: %i (current bomber: %i - last bomber: %i)", iClient, GetClientOfUserId( GetEventInt( hEvent, "killer" ) ), g_iCurrentBomber, g_iLastBomber );
-}
-
-public Action:OnHideFreezePanel( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	PrintToChatAll( "OnHideFreezePanel: ??" );
-}
-
-public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
-{
-	new dummy;
-	
-	if( StrContains( sample, "footsteps" ) == -1 && StrContains( sample, "player/land" ) != 0 )
-	{
-		PrintToChatAll( "Sound: %s", sample );
-	}
-	
-	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
 }
 
 public OnConfigsExecuted( )
@@ -471,6 +441,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			AcceptEntityInput( iRagdoll, "kill" );
 		}
 	}
+	
+	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -521,6 +493,18 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 	}
 	
 	return Plugin_Continue;
+}
+
+public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
+{
+	new dummy;
+	
+	if( StrContains( sample, "footsteps" ) == -1 && StrContains( sample, "player/land" ) != 0 )
+	{
+		PrintToChatAll( "Sound: %s", sample );
+	}
+	
+	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
 }
 
 EndRound( )

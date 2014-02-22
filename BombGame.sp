@@ -627,18 +627,24 @@ ShowRadar( iClient )
 
 InitializeNuke( )
 {
-	new iEntity = -1, String:szModel[ 64 ];
+	new iEntity = -1, iPrevious = -1, String:szModel[ 64 ];
 	
 	// Remove all doors
 	while( ( iEntity = FindEntityByClassname( iEntity, "prop_door_rotating" ) ) != -1 )
 	{
-		GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) );
-		
-		LogMessage( "Door model: %s", szModel );
-		
-		if( StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
+		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
 		{
-			RemoveEdict( iEntity );
+			if( iPrevious )
+			{
+				RemoveEdict( iPrevious );
+			}
+			
+			iPrevious = iEntity;
 		}
+	}
+	
+	if( iPrevious )
+	{
+		RemoveEdict( iPrevious );
 	}
 }

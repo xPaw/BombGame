@@ -31,6 +31,9 @@ new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
 new Handle:g_hBlockedSounds;
 
+new g_iExplosionSprite;
+new g_iSmokeSprite;
+
 public OnPluginStart( )
 {
 	g_hBlockedSounds = CreateTrie();
@@ -80,10 +83,15 @@ public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
 	
-	PrecacheSound( "error.wav" );
+	PrecacheSound( "buttons/blip2.wav" );
 	PrecacheSound( "ui/beep22.wav" );
+	PrecacheSound( "ui/arm_bomb.wav" );
+	PrecacheSound( "items/ammo_pickup.wav" );
 	PrecacheSound( "training/countdown.wav" );
-	PrecacheSound( "weapons/hegrenade/explode3.wav" ); // 3-5
+	PrecacheSound( "weapons/hegrenade/explode3.wav" );
+	
+	g_iExplosionSprite = PrecacheModel( "sprites/blueglow1.vmt" );
+	g_iSmokeSprite = PrecacheModel( "sprites/steam1.vmt" );
 }
 
 public OnMapStart( )
@@ -306,15 +314,22 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd, _, TIMER_FLAG_NO_MAPCHANGE );
-		g_hTimerSound = CreateTimer( g_flRoundTime - 3.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
+		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 	}
 }
 
 public Action:OnRoundSoundTimer( Handle:hTimer )
 {
-	g_hTimerSound = INVALID_HANDLE;
+	g_hTimerSound = CreateTimer( 3.0, OnRoundArmSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 	
 	EmitSoundToAll( "training/countdown.wav" );
+}
+
+public Action:OnRoundArmSoundTimer( Handle:hTimer )
+{
+	g_hTimerSound = INVALID_HANDLE;
+	
+	EmitSoundToAll( "ui/arm_bomb.wav" );
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )
@@ -336,8 +351,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		
 		g_bDeadPlayers[ iBomber ] = true;
 		
-		EmitSoundToAll( "weapons/hegrenade/explode3.wav", iBomber );
-		
 		if( IsPlayerAlive( iBomber ) )
 		{
 			SetEntityGravity( iBomber, 1.0 );
@@ -345,6 +358,20 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 			ForcePlayerSuicide( iBomber );
 			
 			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
+			
+			new Float:vPosition[ 3 ];
+			GetClientEyePosition( iBomber, vPosition );
+			
+			TE_SetupSparks( vPosition, Float:{ 0.0, 0.0, 3.0 }, 100, 100 );
+			TE_SendToAll();
+			
+			TE_SetupExplosion( vPosition, g_iExplosionSprite, 5.0, 1, 0, 100, 1000, _, '-' );
+			TE_SendToAll();
+			
+			TE_SetupSmoke( vPosition, g_iSmokeSprite, 10.0, 3 );
+			TE_SendToAll();
+			
+			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 		}
 	}
 	
@@ -494,33 +521,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( iRagdoll > 0 )
 	{
-		if( g_iLastBomber == iClient )
-		{
-			g_iLastBomber = 0;
-			
-			new iEntity = CreateEntityByName( "env_entity_dissolver" );
-			
-			if( iEntity > 0 )
-			{
-				new String:szTargetName[ 16 ];
-				Format( szTargetName, sizeof( szTargetName ), "dissolve_%i", iClient );
-				
-				DispatchKeyValue( iRagdoll, "targetname", szTargetName );
-				DispatchKeyValue( iEntity, "target", szTargetName );
-				DispatchKeyValue( iEntity, "dissolvetype", "1" );
-				DispatchKeyValue( iEntity, "magnitude", "5.0" );
-				AcceptEntityInput( iEntity, "Dissolve" );
-				AcceptEntityInput( iEntity, "kill" );
-			}
-			else
-			{
-				AcceptEntityInput( iRagdoll, "kill" );
-			}
-		}
-		else
-		{
-			AcceptEntityInput( iRagdoll, "kill" );
-		}
+		AcceptEntityInput( iRagdoll, "kill" );
 	}
 	
 	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
@@ -565,7 +566,11 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 has picked up the bomb!", szName );
 		
-		EmitSoundToAll( "error.wav", iClient );
+		EmitSoundToAll( "buttons/blip2.wav", iClient );
+	}
+	else
+	{
+		EmitSoundToAll( "items/ammo_pickup.wav", iClient );
 	}
 }
 

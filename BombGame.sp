@@ -507,11 +507,6 @@ public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM
 {
 	new dummy;
 	
-	if( StrContains( sample, "footsteps" ) == -1 && StrContains( sample, "player/land" ) != 0 )
-	{
-		PrintToChatAll( "Sound: %s", sample );
-	}
-	
 	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
 }
 
@@ -637,9 +632,13 @@ InitializeNuke( )
 	// Remove all doors
 	while( ( iEntity = FindEntityByClassname( iEntity, "prop_door_rotating" ) ) != -1 )
 	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
+		GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) );
+		
+		LogMessage( "Door model: %s", szModel );
+		
+		if( StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
 		{
-			AcceptEntityInput( iEntity, "kill" );
+			RemoveEdict( iEntity );
 		}
 	}
 }

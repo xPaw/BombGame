@@ -24,7 +24,6 @@ new g_iCurrentBomber;
 new g_iPreviousBomber;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
-new bool:g_bIsAssault;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -132,22 +131,13 @@ public OnMapStart( )
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
 	
-	g_bIsNuke = g_bIsAssault = false;
+	g_bIsNuke = StrEqual( szMap, "de_nuke", false );
+	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
 	
-	if( StrEqual( szMap, "de_nuke", false ) )
+	if( g_bIsNuke )
 	{
-		g_bIsNuke = true;
-		
 		InitializeNuke( );
 	}
-	else if( StrEqual( szMap, "cs_assault", false ) )
-	{
-		g_bIsAssault = true;
-		
-		InitializeAssault( );
-	}
-	
-	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
 }
 
 public OnMapEnd( )
@@ -258,10 +248,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	if( g_bIsNuke )
 	{
 		InitializeNuke( );
-	}
-	else if( g_bIsAssault )
-	{
-		InitializeAssault( );
 	}
 	
 	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
@@ -742,48 +728,4 @@ InitializeNuke( )
 			AcceptEntityInput( iEntity, "kill" );
 		}
 	}
-}
-
-InitializeAssault( )
-{
-	PrintToChatAll( "It's indeed assault!" );
-	
-#if false
-	new iEntity = -1, String:szModel[ 48 ];
-	
-	// Remove all ladders
-	while( ( iEntity = FindEntityByClassname( iEntity, "prop_static" ) ) != -1 )
-	{
-		GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) );
-		
-		PrintToChatAll( "Model: %s", szModel );
-		
-		if( true
-		&& ( StrEqual( szModel, "models/props/de_train/LadderAluminium.mdl" ) || StrEqual( szModel, "models/props/cs_assault/LadderAluminium128.mdl" ) ) )
-		{
-			AcceptEntityInput( iEntity, "kill" );
-		}
-		
-		// models/props/cs_assault/Ladder_tall.mdl
-		// models/props_c17/metalladder001.mdl
-	}
-	
-	PrintToChatAll( "Searching all entities now" );
-	
-	new String:szClass[ 64 ], maxent = GetMaxEntities();
-	
-	for(new i=0;i<= maxent ;i++)
-	{
-		if(!IsValidEntity(i)) continue;
-		
-		GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) );
-		GetEdictClassname(i, szClass, sizeof(szClass) );
-		
-		if( StrContains( szClass, "ladder", false ) != -1 || StrContains( szModel, "ladder", false ) != -1 )
-		{
-			LogMessage( "Entity: %i - Classname: %s - Model: %s", i, szClass, szModel );
-			PrintToChatAll( "Entity: %i - Classname: %s - Model: %s", i, szClass, szModel );
-		}
-	}
-#endif
 }

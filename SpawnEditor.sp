@@ -1,16 +1,12 @@
-#pragma semicolon 1
-
-#include <sourcemod>
-#include <sdktools>
-
-#define VERSION "0.9"
+#include < sourcemod >
+#include < sdktools >
 
 public Plugin:myinfo =
 {
 	name = "Spawn Editor",
 	author = "meng",
 	description = "Spawn point editing tools",
-	version = VERSION,
+	version = "1.0",
 	url = ""
 }
 
@@ -108,7 +104,7 @@ public Action:Command_SetupZones(client, args)
 ShowToolzMenu(client)
 {
 	new Handle:menu = CreateMenu(MainMenuHandler);
-	SetMenuTitle(menu, "Spawn Tools 7");
+	SetMenuTitle(menu, "Spawn Editor");
 	decl String:menuItem[64];
 	Format(menuItem, sizeof(menuItem), "%s Edit Mode", InEditMode == false ? "Enable" : "Disable");
 	AddMenuItem(menu, "0", menuItem);
@@ -128,7 +124,7 @@ public MainMenuHandler(Handle:menu, MenuAction:action, client, selection)
 		if (selection == 0)
 		{
 			InEditMode = InEditMode == false ? true : false;
-			PrintToChatAll("[SpawnTools7] Edit Mode %s.", InEditMode == false ? "Disabled" : "Enabled");
+			PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 Edit Mode %s.", InEditMode == false ? "Disabled" : "Enabled");
 			if (InEditMode)
 				CreateTimer(1.0, ShowEditModeGoodies, INVALID_HANDLE, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 
@@ -137,7 +133,7 @@ public MainMenuHandler(Handle:menu, MenuAction:action, client, selection)
 		else if (selection == 1)
 		{
 			RemoveDefSpawns = RemoveDefSpawns == false ? true : false;
-			PrintToChatAll("[SpawnTools7] Default Spawn Removal will be %s.", RemoveDefSpawns == false ? "Disabled" : "Enabled");
+			PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 Default Spawn Removal will be %s.", RemoveDefSpawns == false ? "Disabled" : "Enabled");
 			ShowToolzMenu(client);
 		}
 		else if (selection == 2)
@@ -148,15 +144,15 @@ public MainMenuHandler(Handle:menu, MenuAction:action, client, selection)
 		else if (selection == 3)
 		{
 			//InitializeNewSpawn(client, 3);
-			PrintToChatAll("[SpawnTools7] Refusing to create CT spawn because of BombGame!");
+			PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 Refusing to create CT spawn because of BombGame!");
 			ShowToolzMenu(client);
 		}
 		else if (selection == 4)
 		{
 			if (!RemoveSpawn(client))
-				PrintToChatAll("[SpawnTools7] No valid spawn point found.");
+				PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 No valid spawn point found.");
 			else
-				PrintToChatAll("[SpawnTools7] Spawn point removed!");
+				PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 Spawn point removed!");
 
 			ShowToolzMenu(client);
 		}
@@ -245,7 +241,7 @@ InitializeNewSpawn(client, team)
 	DataFloats[4] = float(team);
 
 	if (CreateSpawn(DataFloats, true))
-		PrintToChatAll("[SpawnTools7] New spawn point created!");
+		PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 New spawn point created!");
 	else
 		LogError("failed to create new sp entity");
 }
@@ -282,8 +278,7 @@ RemoveSpawn(client)
 	client_posVec[2] += 16;
 	for (d = MaxClients; d < maxent; d++)
 	{
-		if (IsValidEdict(d) && IsValidEntity(d) && GetEdictClassname(d, sClassName, sizeof(sClassName)) &&
-		(StrEqual(sClassName, "info_player_terrorist") || StrEqual(sClassName, "info_player_counterterrorist")))
+		if (IsValidEdict(d) && IsValidEntity(d) && GetEdictClassname(d, sClassName, sizeof(sClassName)) && StrEqual(sClassName, "info_player_terrorist"))
 		{
 			GetEntPropVector(d, Prop_Data, "m_vecOrigin", ent_posVec);
 			if (GetVectorDistance(client_posVec, ent_posVec) < 42.7)
@@ -346,7 +341,7 @@ SaveConfiguration()
 		}
 	}
 	if (KeyValuesToFile(kv, MapCfgPath))
-		PrintToChatAll("[SpawnTools7] Configuration Saved!");
+		PrintToChatAll(" \x01\x0B\x04[Spawn Editor]\x01 Configuration Saved!");
 	else
 		LogError("failed to save to key values");
 

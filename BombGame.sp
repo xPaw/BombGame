@@ -115,6 +115,8 @@ public OnMapStart( )
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
 	
+	PrintToChatAll( "Map: %s", szMap );
+	
 	if( StrEqual( szMap, "de_nuke", false ) )
 	{
 		g_bIsNuke = true;
@@ -623,7 +625,7 @@ CheckEnoughPlayers( )
 	}
 	else
 	{
-		PrintToChatAll( "What happened here?" );
+		PrintToChatAll( "What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
 	}
 	
 	ResetGame( );
@@ -667,12 +669,16 @@ InitializeNuke( )
 
 InitializeAssault( )
 {
-	new iEntity = -1, String:szModel[ 64 ];
+	new iEntity = -1, String:szModel[ 43 ];
 	
 	// Remove all ladders
 	while( ( iEntity = FindEntityByClassname( iEntity, "prop_static" ) ) != -1 )
 	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) )
+		GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) );
+		
+		PrintToChatAll( "Model: %s", szModel );
+		
+		if( true
 		&& ( StrEqual( szModel, "models/props_equipment/metalladder002.mdl" ) || StrEqual( szModel, "models/props/cs_assault/Ladder_tall.mdl" ) ) )
 		{
 			AcceptEntityInput( iEntity, "kill" );

@@ -108,6 +108,14 @@ public OnMapStart( )
 	SetEntPropVector( iEntity, Prop_Send, "m_vecMins", Float:{ -1.0, -1.0, -1.0 } );
 	SetEntPropVector( iEntity, Prop_Send, "m_vecMaxs", Float:{ 1.0, 1.0, 1.0 } );
 	SetEntProp( iEntity, Prop_Send, "m_fEffects", 32 );
+	
+	new String:szMap[ 32 ];
+	GetCurrentMap( szMap, sizeof( szMap ) );
+	
+	if( StrEqual( szMap, "de_nuke", false ) )
+	{
+		InitializeNuke( );
+	}
 }
 
 public OnMapEnd( )
@@ -620,4 +628,18 @@ HideRadar( iClient )
 ShowRadar( iClient )
 {
 	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) & ~HIDEHUD_RADAR );
+}
+
+InitializeNuke( )
+{
+	new iEntity = -1, String:szModel[ 64 ];
+	
+	// Remove all doors
+	while( ( iEntity = FindEntityByClassname( iEntity, "prop_door_rotating" ) ) != -1 )
+	{
+		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
+		{
+			AcceptEntityInput( iEntity, "kill" );
+		}
+	}
 }

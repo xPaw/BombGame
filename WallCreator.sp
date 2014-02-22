@@ -61,7 +61,7 @@ public Plugin:myinfo =
 	author      = "Root, slightly edited by xPaw",
 	description = "Defines map zones where players are not allowed to enter",
 	version     = "1.0",
-	url         = "http://www.dodsplugins.com/, http://www.wcfan.de/"
+	url         = ""
 }
 
 /**
@@ -1288,7 +1288,6 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 152);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 32;

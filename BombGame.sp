@@ -44,7 +44,8 @@ public OnPluginStart( )
 	
 	AddNormalSoundHook( OnNormalSound );
 	
-	RegConsoleCmd( "sm_help", OnCommandHelp );
+	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
+	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
 	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
@@ -137,8 +138,6 @@ public OnMapStart( )
 	}
 	
 	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
-	
-	PrintToChatAll( "Map has hostages: %i", g_bMapHasHostages );
 }
 
 public OnMapEnd( )
@@ -192,6 +191,29 @@ public OnClientPutInServer( iClient )
 public Action:OnCommandHelp( iClient, iArguments )
 {
 	ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 It's simple, just make sure you're not the last person to hold the bomb when the time runs out." );
+	
+	return Plugin_Handled;
+}
+
+public Action:OnCommandStuck( iClient, iArguments )
+{
+	if( iClient != g_iCurrentBomber )
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 You're not the bomber." );
+	}
+	else if( IsPlayerAlive( iClient ) )
+	{
+		if( RemoveBomb( ) )
+		{
+			GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
+			
+			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Bomb given back!" );
+		}
+		else
+		{
+			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Couldn't find any bomb on the floor." );
+		}
+	}
 	
 	return Plugin_Handled;
 }
@@ -308,12 +330,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	g_bStarting = true;
 	g_bGameRunning = false;
 	
-	new iEntity = -1;
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "weapon_c4" ) ) != -1 )
-	{
-		AcceptEntityInput( iEntity, "kill" );
-	}
+	RemoveBomb( );
 	
 	new iPlayers, i, iAlivePlayer, Float:flDelay = 7.0;
 	
@@ -682,6 +699,20 @@ RemoveHostages( )
 	}
 }
 
+RemoveBomb( )
+{
+	new iEntity = -1, bool:bFoundBomb = false;
+	
+	while( ( iEntity = FindEntityByClassname( iEntity, "weapon_c4" ) ) != -1 )
+	{
+		AcceptEntityInput( iEntity, "kill" );
+		
+		bFoundBomb = true;
+	}
+	
+	return bFoundBomb;
+}
+
 InitializeNuke( )
 {
 	new iEntity = -1, String:szModel[ 42 ];
@@ -719,13 +750,6 @@ InitializeAssault( )
 		// models/props_c17/metalladder001.mdl
 	}
 	
-	iEntity = -1;
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "func_ladder" ) ) != -1 )
-	{
-		PrintToChatAll( "Found ladder: %i", iEntity );
-	}
-	
 	PrintToChatAll( "Searching all entities now" );
 	
 	new String:szClass[ 64 ], maxent = GetMaxEntities();
@@ -733,10 +757,13 @@ InitializeAssault( )
 	for(new i=0;i<= maxent ;i++)
 	{
 		if(!IsValidEntity(i)) continue;
-		if(GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) )
+		
+		GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) );
+		GetEdictClassname(i, szClass, sizeof(szClass) );
+		
+		if( StrContains( szClass, "ladder", false ) != -1 || StrContains( szModel, "ladder", false ) != -1 )
 		{
-			GetEdictClassname(i, szClass, sizeof(szClass) );
-			
+			LogMessage( "Entity: %i - Classname: %s - Model: %s", i, szClass, szModel );
 			PrintToChatAll( "Entity: %i - Classname: %s - Model: %s", i, szClass, szModel );
 		}
 	}

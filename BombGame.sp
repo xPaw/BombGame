@@ -28,6 +28,7 @@ new bool:g_bIsAssault;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
+new Handle:g_hTimerStuck = INVALID_HANDLE;
 new Handle:g_hBlockedSounds;
 
 public OnPluginStart( )
@@ -54,8 +55,6 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
-	
-	HookEvent( "bomb_dropped",      OnBombDropped, EventHookMode_Pre );
 	
 #if false
 	new iEntity = -1, String:szZoneName[ 9 ];
@@ -84,6 +83,7 @@ public OnConfigsExecuted( )
 	PrecacheSound( "error.wav" );
 	PrecacheSound( "ui/beep22.wav" );
 	PrecacheSound( "training/countdown.wav" );
+	PrecacheSound( "weapons/hegrenade/explode3.wav" ); // 3-5
 }
 
 public OnMapStart( )
@@ -123,6 +123,8 @@ public OnMapStart( )
 	
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
+	
+	g_bIsNuke = g_bIsAssault = false;
 	
 	if( StrEqual( szMap, "de_nuke", false ) )
 	{
@@ -203,11 +205,11 @@ public Action:OnCommandStuck( iClient, iArguments )
 	}
 	else if( IsPlayerAlive( iClient ) )
 	{
-		if( RemoveBomb( ) )
+		if( GetPlayerWeaponSlot( iClient, CS_SLOT_C4 ) == -1 )
 		{
-			GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
+			g_hTimerStuck = CreateTimer( 5.0, OnTimerGiveBomb, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 			
-			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Bomb given back!" );
+			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 You will get your bomb in 5 seconds." );
 		}
 		else
 		{
@@ -216,6 +218,22 @@ public Action:OnCommandStuck( iClient, iArguments )
 	}
 	
 	return Plugin_Handled;
+}
+
+public Action:OnTimerGiveBomb( Handle:hTimer, any:iSerial )
+{
+	g_hTimerStuck = INVALID_HANDLE;
+	
+	new iClient = GetClientFromSerial( iSerial );
+	
+	if( iClient && iClient == g_iCurrentBomber && IsPlayerAlive( iClient ) && GetPlayerWeaponSlot( iClient, CS_SLOT_C4 ) == -1 )
+	{
+		RemoveBomb( );
+		
+		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
+		
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Bomb given back!" );
+	}
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -317,6 +335,8 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		
 		g_bDeadPlayers[ iBomber ] = true;
 		
+		EmitSoundToAll( "weapons/hegrenade/explode3.wav", iBomber );
+		
 		if( IsPlayerAlive( iBomber ) )
 		{
 			SetEntityGravity( iBomber, 1.0 );
@@ -394,7 +414,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting..." );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
 	}
@@ -407,8 +427,6 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 	if( iClient && IsPlayerAlive( iClient ) )
 	{
 		HideRadar( iClient );
-		
-		PrintCenterText( iClient, "Say /help for more information." );
 	}
 }
 
@@ -421,9 +439,9 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
 		{
 			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
+			
+			return Plugin_Changed;
 		}
-		
-		return Plugin_Continue;
 	}
 	else if( g_bDeadPlayers[ iClient ] )
 	{
@@ -508,20 +526,18 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
 }
 
-public Action:OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
-	
-	PrintToChatAll( "%i dropped bomb - current bomber: %i", iClient, g_iCurrentBomber );
-	
-	return g_iCurrentBomber == iClient ? Plugin_Handled : Plugin_Continue;
-}
-
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	if( !g_bGameRunning || g_bStarting )
 	{
 		return;
+	}
+	
+	if( g_hTimerStuck != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerStuck );
+		
+		g_hTimerStuck = INVALID_HANDLE;
 	}
 	
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
@@ -701,16 +717,12 @@ RemoveHostages( )
 
 RemoveBomb( )
 {
-	new iEntity = -1, bool:bFoundBomb = false;
+	new iEntity = -1;
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "weapon_c4" ) ) != -1 )
 	{
 		AcceptEntityInput( iEntity, "kill" );
-		
-		bFoundBomb = true;
 	}
-	
-	return bFoundBomb;
 }
 
 InitializeNuke( )
@@ -731,6 +743,7 @@ InitializeAssault( )
 {
 	PrintToChatAll( "It's indeed assault!" );
 	
+#if false
 	new iEntity = -1, String:szModel[ 48 ];
 	
 	// Remove all ladders
@@ -767,4 +780,5 @@ InitializeAssault( )
 			PrintToChatAll( "Entity: %i - Classname: %s - Model: %s", i, szClass, szModel );
 		}
 	}
+#endif
 }

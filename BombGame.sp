@@ -119,6 +119,8 @@ public OnMapStart( )
 	
 	if( StrEqual( szMap, "de_nuke", false ) )
 	{
+		PrintToChatAll( "Nuke!" );
+		
 		g_bIsNuke = true;
 		
 		InitializeNuke( );
@@ -126,6 +128,8 @@ public OnMapStart( )
 	else if( StrEqual( szMap, "cs_assault", false ) )
 	{
 		g_bIsAssault = true;
+		
+		PrintToChatAll( "Is assault: %i", g_bIsAssault );
 		
 		InitializeAssault( );
 	}
@@ -704,7 +708,7 @@ InitializeAssault( )
 		if(!IsValidEntity(i)) continue;
 		if(GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props/de_train/LadderAluminium.mdl" ) )
 		{
-			if( GetEdictClassname(i, szModel, sizeof(szModel) )
+			if( GetEdictClassname(i, szModel, sizeof(szModel) ) )
 			{
 				PrintToChatAll( "found ladder, classname: %s", szModel );
 			}

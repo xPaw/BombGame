@@ -371,6 +371,8 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 	if( iClient && IsPlayerAlive( iClient ) )
 	{
 		HideRadar( iClient );
+		
+		PrintHintText( iClient, "The game is simple, just make sure you're not the last person to hold the bomb when the time runs out." );
 	}
 }
 
@@ -427,6 +429,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	else
 	{
+		PrintToChatAll( "Someone died: %i - last bomber is: %i", iClient, g_iLastBomber );
+		
 		CheckEnoughPlayers( );
 		
 		if( g_bGameRunning )
@@ -669,7 +673,9 @@ InitializeNuke( )
 
 InitializeAssault( )
 {
-	new iEntity = -1, String:szModel[ 43 ];
+	PrintToChatAll( "It's indeed assault!" );
+	
+	new iEntity = -1, String:szModel[ 48 ];
 	
 	// Remove all ladders
 	while( ( iEntity = FindEntityByClassname( iEntity, "prop_static" ) ) != -1 )
@@ -679,14 +685,33 @@ InitializeAssault( )
 		PrintToChatAll( "Model: %s", szModel );
 		
 		if( true
-		&& ( StrEqual( szModel, "models/props_equipment/metalladder002.mdl" ) || StrEqual( szModel, "models/props/cs_assault/Ladder_tall.mdl" ) ) )
+		&& ( StrEqual( szModel, "models/props/de_train/LadderAluminium.mdl" ) || StrEqual( szModel, "models/props/cs_assault/LadderAluminium128.mdl" ) ) )
 		{
 			AcceptEntityInput( iEntity, "kill" );
 		}
+		
+		// models/props/cs_assault/Ladder_tall.mdl
+		// models/props_c17/metalladder001.mdl
 	}
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_ladder" ) ) != -1 )
 	{
 		PrintToChatAll( "Found ladder: %i", iEntity );
+	}
+	
+	for(new i=0;i<= GetMaxEntities() ;i++)
+	{
+		if(!IsValidEntity(i)) continue;
+		if(GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props/de_train/LadderAluminium.mdl" ) )
+		{
+			if( GetEdictClassname(i, szModel, sizeof(szModel) )
+			{
+				PrintToChatAll( "found ladder, classname: %s", szModel );
+			}
+			else
+			{
+				PrintToChatAll( "found ladder, failed to find classname????");
+			}
+		}
 	}
 }

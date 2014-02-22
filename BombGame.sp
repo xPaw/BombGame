@@ -54,6 +54,8 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
+	HookEvent( "bomb_dropped",      OnBombDropped, EventHookMode_Pre );
+	
 #if false
 	new iEntity = -1, String:szZoneName[ 9 ];
 	
@@ -389,7 +391,7 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 	{
 		HideRadar( iClient );
 		
-		PrintHintText( iClient, "The game is simple, just make sure you're not the last person to hold the bomb when the time runs out." );
+		PrintCenterText( iClient, "Say /help for more information." );
 	}
 }
 
@@ -397,12 +399,8 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	if( g_iLastBomber > 0 && g_iLastBomber == iClient )
+	if( g_iLastBomber == iClient )
 	{
-		PrintToChatAll( "Setting death weapon to c4" );
-		
-		SetEventString( hEvent, "weapon", "hegrenade" );
-		
 		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
 		{
 			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
@@ -491,6 +489,15 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	
 	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
+}
+
+public Action:OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	PrintToChatAll( "%i dropped bomb - current bomber: %i", iClient, g_iCurrentBomber );
+	
+	return g_iCurrentBomber == iClient ? Plugin_Handled : Plugin_Continue;
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -721,19 +728,16 @@ InitializeAssault( )
 	
 	PrintToChatAll( "Searching all entities now" );
 	
-	for(new i=0;i<= GetMaxEntities() ;i++)
+	new String:szClass[ 64 ], maxent = GetMaxEntities();
+	
+	for(new i=0;i<= maxent ;i++)
 	{
 		if(!IsValidEntity(i)) continue;
-		if(GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props/de_train/LadderAluminium.mdl" ) )
+		if(GetEntPropString( i, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) )
 		{
-			if( GetEdictClassname(i, szModel, sizeof(szModel) ) )
-			{
-				PrintToChatAll( "found ladder, classname: %s", szModel );
-			}
-			else
-			{
-				PrintToChatAll( "found ladder, failed to find classname????");
-			}
+			GetEdictClassname(i, szClass, sizeof(szClass) );
+			
+			PrintToChatAll( "Entity: %i - Classname: %s - Model: %s", i, szClass, szModel );
 		}
 	}
 }

@@ -636,7 +636,7 @@ InitializeNuke( )
 		{
 			if( iPrevious != -1 )
 			{
-				RemoveEdict( iPrevious );
+				AcceptEntityInput( iPrevious, "kill" );
 			}
 			
 			iPrevious = iEntity;
@@ -645,6 +645,6 @@ InitializeNuke( )
 	
 	if( iPrevious != -1 )
 	{
-		RemoveEdict( iPrevious );
+		AcceptEntityInput( iPrevious, "kill" );
 	}
 }

@@ -42,6 +42,10 @@ public OnPluginStart( )
 	SetTrieValue( g_hBlockedSounds, "player/death5.wav", 1 );
 	SetTrieValue( g_hBlockedSounds, "player/death6.wav", 1 );
 	
+	AddNormalSoundHook( OnNormalSound );
+	
+	RegConsoleCmd( "sm_help", OnCommandHelp );
+	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
@@ -49,8 +53,6 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
-	
-	AddNormalSoundHook( OnNormalSound );
 	
 #if false
 	new iEntity = -1, String:szZoneName[ 9 ];
@@ -91,11 +93,15 @@ public OnMapStart( )
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
+	iEntity = -1;
+	
 	// Remove all hostage rescue zones
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_hostage_rescue" ) ) != -1 )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
+	
+	iEntity = -1;
 	
 	// Remove all counter-terrorist spawn points
 	while( ( iEntity = FindEntityByClassname( iEntity, "info_player_counterterrorist" ) ) != -1 )
@@ -115,12 +121,8 @@ public OnMapStart( )
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
 	
-	PrintToChatAll( "Map: %s", szMap );
-	
 	if( StrEqual( szMap, "de_nuke", false ) )
 	{
-		PrintToChatAll( "Nuke!" );
-		
 		g_bIsNuke = true;
 		
 		InitializeNuke( );
@@ -129,12 +131,12 @@ public OnMapStart( )
 	{
 		g_bIsAssault = true;
 		
-		PrintToChatAll( "Is assault: %i", g_bIsAssault );
-		
 		InitializeAssault( );
 	}
 	
 	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
+	
+	PrintToChatAll( "Map has hostages: %i", g_bMapHasHostages );
 }
 
 public OnMapEnd( )
@@ -185,6 +187,13 @@ public OnClientPutInServer( iClient )
 	}
 }
 
+public Action:OnCommandHelp( iClient, iArguments )
+{
+	ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 It's simple, just make sure you're not the last person to hold the bomb when the time runs out." );
+	
+	return Plugin_Handled;
+}
+
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iLastBomber = 0;
@@ -198,6 +207,10 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	if( g_bIsNuke )
 	{
 		InitializeNuke( );
+	}
+	else if( g_bIsAssault )
+	{
+		InitializeAssault( );
 	}
 	
 	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
@@ -433,9 +446,10 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	else
 	{
-		PrintToChatAll( "Someone died: %i - last bomber is: %i", iClient, g_iLastBomber );
-		
-		CheckEnoughPlayers( );
+		if( g_iLastBomber != iClient )
+		{
+			CheckEnoughPlayers( );
+		}
 		
 		if( g_bGameRunning )
 		{
@@ -698,10 +712,14 @@ InitializeAssault( )
 		// models/props_c17/metalladder001.mdl
 	}
 	
+	iEntity = -1;
+	
 	while( ( iEntity = FindEntityByClassname( iEntity, "func_ladder" ) ) != -1 )
 	{
 		PrintToChatAll( "Found ladder: %i", iEntity );
 	}
+	
+	PrintToChatAll( "Searching all entities now" );
 	
 	for(new i=0;i<= GetMaxEntities() ;i++)
 	{

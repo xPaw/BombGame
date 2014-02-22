@@ -634,7 +634,7 @@ InitializeNuke( )
 	{
 		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
 		{
-			if( iPrevious )
+			if( iPrevious != -1 )
 			{
 				RemoveEdict( iPrevious );
 			}
@@ -643,7 +643,7 @@ InitializeNuke( )
 		}
 	}
 	
-	if( iPrevious )
+	if( iPrevious != -1 )
 	{
 		RemoveEdict( iPrevious );
 	}

@@ -193,6 +193,7 @@ public OnClientPutInServer( iClient )
 public Action:OnCommandHelp( iClient, iArguments )
 {
 	ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 It's simple, just make sure you're not the last person to hold the bomb when the time runs out." );
+	ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Say\x02 /stuck\x01 if your bomb is inaccessible." );
 	
 	return Plugin_Handled;
 }
@@ -414,7 +415,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		g_bStarting = true;
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information." );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
 		
 		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
 	}
@@ -438,9 +439,8 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	{
 		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
 		{
+			SetEventString( hEvent, "weapon", "hegrenade" );
 			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
-			
-			return Plugin_Changed;
 		}
 	}
 	else if( g_bDeadPlayers[ iClient ] )

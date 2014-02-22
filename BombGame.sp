@@ -22,6 +22,8 @@ new g_bGameRunning;
 new g_iLastBomber;
 new g_iCurrentBomber;
 new g_iPreviousBomber;
+new bool:g_bMapHasHostages;
+new bool:g_bIsNuke;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -114,8 +116,12 @@ public OnMapStart( )
 	
 	if( StrEqual( szMap, "de_nuke", false ) )
 	{
+		g_bIsNuke = true;
+		
 		InitializeNuke( );
 	}
+	
+	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
 }
 
 public OnMapEnd( )
@@ -171,11 +177,14 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	g_iLastBomber = 0;
 	g_iPreviousBomber = 0;
 	
-	new iEntity = -1;
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "hostage_entity" ) ) != -1 )
+	if( g_bMapHasHostages )
 	{
-		AcceptEntityInput( iEntity, "kill" );
+		RemoveHostages( );
+	}
+	
+	if( g_bIsNuke )
+	{
+		InitializeNuke( );
 	}
 	
 	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
@@ -625,26 +634,26 @@ ShowRadar( iClient )
 	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) & ~HIDEHUD_RADAR );
 }
 
+RemoveHostages( )
+{
+	new iEntity = -1;
+	
+	while( ( iEntity = FindEntityByClassname( iEntity, "hostage_entity" ) ) != -1 )
+	{
+		AcceptEntityInput( iEntity, "kill" );
+	}
+}
+
 InitializeNuke( )
 {
-	new iEntity = -1, iPrevious = -1, String:szModel[ 64 ];
+	new iEntity = -1, String:szModel[ 64 ];
 	
 	// Remove all doors
 	while( ( iEntity = FindEntityByClassname( iEntity, "prop_door_rotating" ) ) != -1 )
 	{
 		if( GetEntPropString( iEntity, Prop_Data, "m_ModelName", szModel, sizeof( szModel ) ) && StrEqual( szModel, "models/props_downtown/metal_door_112.mdl" ) )
 		{
-			if( iPrevious != -1 )
-			{
-				AcceptEntityInput( iPrevious, "kill" );
-			}
-			
-			iPrevious = iEntity;
+			AcceptEntityInput( iEntity, "kill" );
 		}
-	}
-	
-	if( iPrevious != -1 )
-	{
-		AcceptEntityInput( iPrevious, "kill" );
 	}
 }

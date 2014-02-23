@@ -1240,7 +1240,7 @@ SpawnZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME,     ZoneName, sizeof(ZoneName));
 
 	// Create a zone (best entity for that is trigger_multiple)
-	new zone = CreateEntityByName("func_clip_vphysics"); // func_brush
+	new zone = CreateEntityByName("func_brush");
 
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
@@ -1308,7 +1308,7 @@ KillZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME, ZoneName, sizeof(ZoneName));
 
 	zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "func_clip_vphysics")) != INIT)
+	while ((zone = FindEntityByClassname(zone, "func_brush")) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

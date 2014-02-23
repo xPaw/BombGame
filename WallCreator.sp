@@ -1284,11 +1284,11 @@ SpawnZone(zoneIndex)
 		m_vecMaxs[2] *= -1.0;
 
 	// Set mins and maxs for entity
-	SetEntPropVector(zone, Prop_Data, "m_vecMins", m_vecMins);
-	SetEntPropVector(zone, Prop_Data, "m_vecMaxs", m_vecMaxs);
+	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
+	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	SetEntProp(zone, Prop_Data, "m_nSolidType", 2);
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 8);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 32;

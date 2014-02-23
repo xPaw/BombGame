@@ -1,5 +1,6 @@
 #include < sourcemod >
 #include < sdktools >
+#include < sdkhooks >
 #include < cstrike >
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
@@ -53,6 +54,7 @@ public OnPluginStart( )
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
+	HookEvent( "bomb_dropped",     OnBombDropped );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
@@ -511,6 +513,26 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	
 	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
+}
+
+public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	new iEntity = GetEventInt( hEvent, "entindex" );
+	
+	if( IsValidEdict( iEntity ) )
+	{
+		PrintToChatAll( "Hooking dropped bomb's shouldcollide: %i", iEntity );
+		
+		SDKHook( iEntity, SDKHook_ShouldCollide, OnShouldBombCollide );
+	}
+}
+
+public bool:OnShouldBombCollide( iEntity, iCollisionGroup, iContentsMask, bool:bOriginalResult )
+{
+	if( !bOriginalResult )
+	{
+		PrintToChatAll( "OnShouldBombCollide: entity: %i - collisiongroup: %i - contentsmask: %i", iEntity, iCollisionGroup, iContentsMask );
+	}
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

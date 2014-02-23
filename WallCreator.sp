@@ -1240,7 +1240,7 @@ SpawnZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME,     ZoneName, sizeof(ZoneName));
 
 	// Create a zone (best entity for that is trigger_multiple)
-	new zone = CreateEntityByName("func_brush");
+	new zone = CreateEntityByName("func_wall");
 
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
@@ -1289,14 +1289,9 @@ SpawnZone(zoneIndex)
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 
-	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
-	
-	SetEntPropVector(zone, Prop_Data, "m_vecMins", m_vecMins);
-	SetEntPropVector(zone, Prop_Data, "m_vecMaxs", m_vecMaxs);
-
-	SetEntProp(zone, Prop_Data, "m_nSolidType", 2);
-
-	SetEntProp(zone, Prop_Data, "m_fEffects", GetEntProp(zone, Prop_Data, "m_fEffects") | 32);
+	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
+	m_fEffects |= 32;
+	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
 }
 
 /* KillZone()
@@ -1312,7 +1307,7 @@ KillZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME, ZoneName, sizeof(ZoneName));
 
 	zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "func_brush")) != INIT)
+	while ((zone = FindEntityByClassname(zone, "func_wall")) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

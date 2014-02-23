@@ -1,6 +1,5 @@
 #include < sourcemod >
 #include < sdktools >
-#include < sdkhooks >
 #include < cstrike >
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
@@ -520,15 +519,8 @@ public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		PrintToChatAll( "Hooking dropped bomb's shouldcollide: %i", iEntity );
 		
-		SDKHook( iEntity, SDKHook_ShouldCollide, OnShouldBombCollide );
+		SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 5 );
 	}
-}
-
-public bool:OnShouldBombCollide( iEntity, iCollisionGroup, iContentsMask, bool:bOriginalResult )
-{
-	PrintToChatAll( "OnShouldBombCollide: entity: %i - collisiongroup: %i - contentsmask: %i", iEntity, iCollisionGroup, iContentsMask );
-	
-	return true;
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

@@ -712,7 +712,7 @@ RemoveBomb( )
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "weapon_c4" ) ) != -1 )
 	{
-		PrintToChatAll( "Bomb %i - m_nSolidType: %i - m_CollisionGroup: %i", iEntity, GetEntProp(iEntity, Prop_Data, "m_nSolidType"), GetEntProp(iEntity, Prop_Data, "m_CollisionGroup"));
+		PrintToChatAll( "Bomb %i - m_nSolidType: %i - m_CollisionGroup: %i - m_usSolidFlags: %i", iEntity, GetEntProp(iEntity, Prop_Data, "m_nSolidType"), GetEntProp(iEntity, Prop_Data, "m_CollisionGroup"), GetEntProp(iEntity, Prop_Data, "m_usSolidFlags"));
 		
 		AcceptEntityInput( iEntity, "kill" );
 	}

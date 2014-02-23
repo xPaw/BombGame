@@ -22,7 +22,7 @@ public OnPluginStart()
 	RegAdminCmd("bombgame_spawns", Command_SetupZones, ADMFLAG_CONFIG, "Opens the spawn editor menu");
 	
 	decl String:configspath[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, configspath, sizeof(configspath), "configs/spawntools7");
+	BuildPath(Path_SM, configspath, sizeof(configspath), "data/bombgame_spawns");
 	if (!DirExists(configspath))
 		CreateDirectory(configspath, 0x0265);
 
@@ -35,9 +35,22 @@ public OnMapStart()
 	RemoveDefSpawns = false;
 	InEditMode = false;
 
-	decl String:mapName[64];
-	GetCurrentMap(mapName, sizeof(mapName));
-	BuildPath(Path_SM, MapCfgPath, sizeof(MapCfgPath), "configs/spawntools7/%s.cfg", mapName);
+	new String:mapName[64], String:curmap[64];
+	GetCurrentMap(curmap, sizeof(curmap));
+	
+	// Does current map string is contains a "workshop" word?
+	if (strncmp(curmap, "workshop", 8) == 0)
+	{
+		// If yes - skip the first 19 characters to avoid comparing the "workshop/12345678" prefix
+		strcopy(mapName, sizeof(mapName), curmap[19]);
+	}
+	else
+	{
+		// Not a workshop map
+		strcopy(mapName, sizeof(mapName), curmap);
+	}
+	
+	BuildPath(Path_SM, MapCfgPath, sizeof(MapCfgPath), "data/bombgame_spawns/%s.cfg", mapName);
 	ReadConfig();
 	
 	BlueGlowSprite = PrecacheModel("sprites/blueglow1.vmt");

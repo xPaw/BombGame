@@ -97,7 +97,7 @@ public OnPluginStart()
 
 	// Get the zones path
 	decl String:path[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, path, sizeof(path), "data/zones");
+	BuildPath(Path_SM, path, sizeof(path), "data/bombgame_walls");
 
 	// If there are no 'zones' folder - create it
 	if (!DirExists(path))
@@ -287,7 +287,7 @@ public Action:OnClientSayCommand(client, const String:command[], const String:sA
 
 		// Update the config file
 		decl String:config[PLATFORM_MAX_PATH];
-		BuildPath(Path_SM, config, sizeof(config), "data/zones/%s.cfg", map);
+		BuildPath(Path_SM, config, sizeof(config), "data/bombgame_walls/%s.cfg", map);
 
 		PrintToChat(client, "%s%t", PREFIX, "Name Edited");
 
@@ -553,7 +553,7 @@ public Menu_ZoneOptions(Handle:menu, MenuAction:action, client, param)
 			// Get a config, menu item info and initialize everything else
 			decl String:config[PLATFORM_MAX_PATH], String:ZoneName[MAX_ZONE_LENGTH], String:info[11], Float:vec1[3], Float:vec2[3];
 			GetMenuItem(menu, param, info, sizeof(info));
-			BuildPath(Path_SM, config, sizeof(config), "data/zones/%s.cfg", map);
+			BuildPath(Path_SM, config, sizeof(config), "data/bombgame_walls/%s.cfg", map);
 
 			// Retrieve zone which player is editing right now
 			new Handle:hZone = GetArrayCell(ZonesArray, EditingZone[client]);
@@ -750,7 +750,7 @@ public Menu_ZoneVectorEdit(Handle:menu, MenuAction:action, client, param)
 
 				// Write changes into config file
 				decl String:config[PLATFORM_MAX_PATH];
-				BuildPath(Path_SM, config, sizeof(config), "data/zones/%s.cfg", map);
+				BuildPath(Path_SM, config, sizeof(config), "data/bombgame_walls/%s.cfg", map);
 
 				new Handle:kv = CreateKeyValues("Zones");
 				FileToKeyValues(kv, config);
@@ -937,7 +937,7 @@ public Menu_SaveZone(Handle:menu, MenuAction:action, client, param)
 			{
 				// Save new zone in config
 				decl String:config[PLATFORM_MAX_PATH];
-				BuildPath(Path_SM, config, sizeof(config), "data/zones/%s.cfg", map);
+				BuildPath(Path_SM, config, sizeof(config), "data/bombgame_walls/%s.cfg", map);
 
 				// Get "Zones" config
 				new Handle:kv = CreateKeyValues("Zones"), number;
@@ -1063,7 +1063,7 @@ public Panel_Confirmation(Handle:menu, MenuAction:action, client, param)
 
 			// Delete zone from config file
 			decl String:config[PLATFORM_MAX_PATH];
-			BuildPath(Path_SM, config, sizeof(config), "data/zones/%s.cfg", map);
+			BuildPath(Path_SM, config, sizeof(config), "data/bombgame_walls/%s.cfg", map);
 
 			new Handle:kv = CreateKeyValues("Zones");
 			FileToKeyValues(kv, config);
@@ -1172,7 +1172,7 @@ ParseZoneConfig()
 
 	// Get the config
 	decl String:config[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, config, sizeof(config), "data/zones/%s.cfg", map);
+	BuildPath(Path_SM, config, sizeof(config), "data/bombgame_walls/%s.cfg", map);
 
 	if (FileExists(config))
 	{

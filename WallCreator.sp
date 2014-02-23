@@ -1289,9 +1289,14 @@ SpawnZone(zoneIndex)
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 
-	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
-	m_fEffects |= 32;
-	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
+	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
+	
+	SetEntPropVector(zone, Prop_Data, "m_vecMins", m_vecMins);
+	SetEntPropVector(zone, Prop_Data, "m_vecMaxs", m_vecMaxs);
+
+	SetEntProp(zone, Prop_Data, "m_nSolidType", 2);
+
+	SetEntProp(zone, Prop_Data, "m_fEffects", GetEntProp(zone, Prop_Data, "m_fEffects") | 32);
 }
 
 /* KillZone()

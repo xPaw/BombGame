@@ -1,5 +1,6 @@
 #include < sourcemod >
 #include < sdktools >
+#include < sdkhooks >
 #include < cstrike >
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
@@ -58,24 +59,20 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
-#if false
-	new iEntity = -1, String:szZoneName[ 9 ];
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "func_wall" ) ) != -1 )
-	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szZoneName, sizeof( szZoneName ) ) && StrEqual( szZoneName, "sm_zone_" ) )
-		{
-			HookSingleEntityOutput( iEntity, "OnStartTouch", OnInvisibleWallTouch );
-		}
-	}
-#endif
-	
 	ServerCommand( "mp_restartgame 1" );
 }
 
-public OnInvisibleWallTouch(const String:output[], caller, activator, Float:delay)
+public OnEntityCreated( iEntity, const String:szClassName[] )
 {
-	PrintToChatAll( "OnInvisibleWallTouch: %i - %i - %s", caller, activator, output );
+	if( StrEqual( szClassName, "weapon_c4" ) )
+	{
+		PrintToChatAll( "C4 spawned, m_CollisionGroup: %i, m_MoveCollide: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ), GetEntProp( iEntity, Prop_Send, "m_MoveCollide" ) );
+		
+		SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 2 );
+		SetEntProp( iEntity, Prop_Send, "m_MoveCollide", 2 );
+		
+		PrintToChatAll( "C4 changed, m_CollisionGroup: %i, m_MoveCollide: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ), GetEntProp( iEntity, Prop_Send, "m_MoveCollide" ) );
+	}
 }
 
 public OnConfigsExecuted( )
@@ -348,7 +345,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 			new Float:vPosition[ 3 ];
 			GetClientEyePosition( iBomber, vPosition );
 			
-			TE_SetupExplosion( vPosition, g_iExplosionSprite, 5.0, 1, 0, 100, 1000, _, '-' );
+			TE_SetupExplosion( vPosition, g_iExplosionSprite, 5.0, 1, 0, 100, 600, _, '-' );
 			TE_SendToAll();
 			
 			TE_SetupSmoke( vPosition, g_iSmokeSprite, 10.0, 3 );

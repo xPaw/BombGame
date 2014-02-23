@@ -1288,7 +1288,12 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Data, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Data, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Data, "m_CollisionGroup", 0);
+	SetEntProp(zone, Prop_Data, "m_CollisionGroup", 1);
+	SetEntProp(zone, Prop_Data, "m_usSolidFlags", 152);
+	
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 1);
+	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 152);
 
 	new m_fEffects = GetEntProp(zone, Prop_Data, "m_fEffects");
 	m_fEffects |= 32;

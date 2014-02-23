@@ -350,9 +350,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 			new Float:vPosition[ 3 ];
 			GetClientEyePosition( iBomber, vPosition );
 			
-			TE_SetupSparks( vPosition, Float:{ 0.0, 0.0, 3.0 }, 100, 100 );
-			TE_SendToAll();
-			
 			TE_SetupExplosion( vPosition, g_iExplosionSprite, 5.0, 1, 0, 100, 1000, _, '-' );
 			TE_SendToAll();
 			

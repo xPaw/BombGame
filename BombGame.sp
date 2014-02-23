@@ -529,14 +529,9 @@ public bool:OnShouldBombCollide( iEntity, iCollisionGroup, iContentsMask, bool:b
 	if( !bOriginalResult )
 	{
 		PrintToChatAll( "OnShouldBombCollide: entity: %i - collisiongroup: %i - contentsmask: %i", iEntity, iCollisionGroup, iContentsMask );
-		
-		if( iCollisionGroup == 5 )
-		{
-			return true;
-		}
 	}
 	
-	return bOriginalResult;
+	return true;
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

@@ -526,10 +526,7 @@ public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 
 public bool:OnShouldBombCollide( iEntity, iCollisionGroup, iContentsMask, bool:bOriginalResult )
 {
-	if( !bOriginalResult )
-	{
-		PrintToChatAll( "OnShouldBombCollide: entity: %i - collisiongroup: %i - contentsmask: %i", iEntity, iCollisionGroup, iContentsMask );
-	}
+	PrintToChatAll( "OnShouldBombCollide: entity: %i - collisiongroup: %i - contentsmask: %i", iEntity, iCollisionGroup, iContentsMask );
 	
 	return true;
 }

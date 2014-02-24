@@ -214,11 +214,19 @@ public Action:OnCommandStuck( iClient, iArguments )
 
 public Action:OnCommandStart( iClient, iArguments )
 {
-	if( !g_bStarting && !g_bGameRunning )
+	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
 	{
-		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Starting the game" );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
 		
-		CS_TerminateRound( 5.0, CSRoundEnd_GameStart );
+		//CS_TerminateRound( 5.0, CSRoundEnd_Draw );
+		
+		new Handle:hLeader = CreateEvent( "teamplay_round_start" );
+		SetEventInt( hLeader, "full_reset", 0 );
+		FireEvent( hLeader );
+	}
+	else
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Can't start the game now." );
 	}
 	
 	return Plugin_Handled;
@@ -348,7 +356,7 @@ public Action:OnRoundTimerEndWithNoGameRunning( Handle:hTimer )
 {
 	g_hTimer = INVALID_HANDLE;
 	
-	CS_TerminateRound( 5.0, CSRoundEnd_GameStart );
+	CS_TerminateRound( 5.0, CSRoundEnd_Draw );
 	
 	PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Ending round..." );
 }

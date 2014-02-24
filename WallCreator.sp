@@ -7,7 +7,7 @@
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
-#define BRUSH_ENTITY      "trigger_impact"
+#define BRUSH_ENTITY      "func_wall"
 
 enum // Just makes plugin readable
 {
@@ -1288,29 +1288,11 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	//SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
-	//SetEntProp(zone, Prop_Send, "m_usSolidFlags", 520);
-
-	SetEntProp(zone, Prop_Send, "m_usSolidFlags",  152);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 0x020;
 	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
-	
-	HookSingleEntityOutput(zone, "OnEndTouch",   OnTouch3);
-	HookSingleEntityOutput(zone, "OnTouching", OnTouch2);
-}
-
-public OnTouch2(const String:output[], caller, activator, Float:delay)
-{
-	PrintToChatAll( "%i (%i) called OnTouching on one of the invisible walls!", caller, activator);
-}
-
-public OnTouch3(const String:output[], caller, activator, Float:delay)
-{
-	PrintToChatAll( "%i (%i) called OnEndTouch on one of the invisible walls!", caller, activator);
 }
 
 /* KillZone()

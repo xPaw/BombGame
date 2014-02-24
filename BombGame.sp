@@ -169,7 +169,7 @@ public OnClientDisconnect( iClient )
 	}
 	else
 	{
-		CheckEnoughPlayers( );
+		CheckEnoughPlayers( iClient );
 	}
 }
 
@@ -218,11 +218,9 @@ public Action:OnCommandStart( iClient, iArguments )
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
 		
-		//CS_TerminateRound( 5.0, CSRoundEnd_Draw );
+		g_bStarting = true;
 		
-		new Handle:hLeader = CreateEvent( "teamplay_round_start" );
-		SetEventInt( hLeader, "full_reset", 0 );
-		FireEvent( hLeader );
+		CS_TerminateRound( 5.0, CSRoundEnd_Draw );
 	}
 	else
 	{
@@ -527,7 +525,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		if( g_iLastBomber != iClient )
 		{
-			CheckEnoughPlayers( );
+			CheckEnoughPlayers( iClient );
 		}
 		
 		if( g_bGameRunning )
@@ -673,7 +671,7 @@ ResetGame( )
 	g_iPreviousBomber = 0;
 }
 
-CheckEnoughPlayers( )
+CheckEnoughPlayers( iClient )
 {
 	if( !g_bGameRunning )
 	{
@@ -684,7 +682,7 @@ CheckEnoughPlayers( )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
+		if( i != iClient && IsClientInGame( i ) && IsPlayerAlive( i ) )
 		{
 			iAlive++;
 			

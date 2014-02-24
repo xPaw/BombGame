@@ -414,6 +414,9 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	if( hTimer != INVALID_HANDLE )
 	{
 		CS_TerminateRound( flDelay, CSRoundEnd_TargetBombed );
+		
+		CS_SetTeamScore(CS_TEAM_T, 99); 
+		SetTeamScore(CS_TEAM_T, 99); 
 	}
 }
 

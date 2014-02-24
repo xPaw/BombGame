@@ -1246,13 +1246,16 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "spawnflags", "9");
-
+	DispatchKeyValue(zone, "spawnflags", "72");
+	DispatchKeyValue(zone, "wait",       "0");
+	
 	// Spawn an entity
 	DispatchSpawn(zone);
 
 	// Since its brush entity, use ActivateEntity as well
 	ActivateEntity(zone);
+
+	SetEntProp(zone, Prop_Data, "m_spawnflags", 72);
 
 	// Get the middle of zone
 	GetMiddleOfABox(m_vecMins, m_vecMaxs, middle);
@@ -1289,9 +1292,12 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 	//SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
 	//SetEntProp(zone, Prop_Send, "m_usSolidFlags", 520);
+
+	SetEntProp(zone, Prop_Send, "m_usSolidFlags",  152);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 32;

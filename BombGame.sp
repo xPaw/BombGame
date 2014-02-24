@@ -1,6 +1,5 @@
 #include < sourcemod >
 #include < sdktools >
-#include < sdkhooks >
 #include < cstrike >
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
@@ -66,18 +65,6 @@ public OnPluginStart( )
 	ServerCommand( "mp_restartgame 1" );
 }
 
-public OnEntityCreated( iEntity, const String:szClassName[] )
-{
-	if( StrEqual( szClassName, "weapon_c4" ) )
-	{
-		PrintToChatAll( "C4 spawned [1], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
-		
-		SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 2 );
-		
-		PrintToChatAll( "C4 changed [2], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
-	}
-}
-
 public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iStatsBombDropped++;
@@ -86,7 +73,7 @@ public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	PrintToChatAll( "C4 dropped [3], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 	
-	SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 2 );
+	SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 5 );
 	
 	PrintToChatAll( "C4 changed [4], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 }
@@ -293,6 +280,13 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	}
 	
 	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
+	
+	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
+	{
+		g_bStarting = true;
+		
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
+	}
 }
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -465,20 +459,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	//SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
-	
-	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
-	{
-		g_bStarting = true;
-		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
-		
-		PrintToChatAll( "g_flRoundTime: %f", g_flRoundTime );
-		
-		if( g_flRoundTime == 0.0 )
-		{
-			CS_TerminateRound( 2.0, CSRoundEnd_Draw );
-		}
-	}
 }
 
 public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )

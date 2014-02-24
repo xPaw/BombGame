@@ -8,6 +8,7 @@
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
+#define BRUSH_ENTITY      "func_wall"
 
 enum // Just makes plugin readable
 {
@@ -1240,7 +1241,7 @@ SpawnZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME,     ZoneName, sizeof(ZoneName));
 
 	// Create a zone (best entity for that is trigger_multiple)
-	new zone = CreateEntityByName("func_wall");
+	new zone = CreateEntityByName(BRUSH_ENTITY);
 
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
@@ -1288,10 +1289,24 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 520);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 32;
 	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
+	
+	HookSingleEntityOutput(zone, "OnStartTouch", OnTouch);
+	HookSingleEntityOutput(zone, "OnTouching", OnTouch2);
+}
+
+public OnTouch(const String:output[], caller, activator, Float:delay)
+{
+	PrintToChatAll( "%i (%i) called OnStartTouch on one of the invisible walls!", caller, activator);
+}
+
+public OnTouch2(const String:output[], caller, activator, Float:delay)
+{
+	PrintToChatAll( "%i (%i) called OnTouching on one of the invisible walls!", caller, activator);
 }
 
 /* KillZone()
@@ -1307,7 +1322,7 @@ KillZone(zoneIndex)
 	GetArrayString(hZone, ZONE_NAME, ZoneName, sizeof(ZoneName));
 
 	zone = INIT;
-	while ((zone = FindEntityByClassname(zone, "func_wall")) != INIT)
+	while ((zone = FindEntityByClassname(zone, BRUSH_ENTITY)) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

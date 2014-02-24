@@ -7,7 +7,7 @@
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
-#define BRUSH_ENTITY      "func_wall"
+#define BRUSH_ENTITY      "func_brush"
 
 enum // Just makes plugin readable
 {
@@ -225,19 +225,15 @@ public Action:OnPlayerRunCmd(client, &buttons)
  * -------------------------------------------------------------------------- */
 public Action:OnClientSayCommand(client, const String:command[], const String:sArgs[])
 {
-	decl String:text[MAX_ZONE_LENGTH];
-
-	// Copy original message
-	strcopy(text, sizeof(text), sArgs);
-
-	// Remove quotes from dest string
-	StripQuotes(text);
-
 	// When player is about to name a zone
 	if (NamesZone[client])
 	{
 		// Set boolean after sending a text
 		NamesZone[client] = false;
+
+		decl String:text[MAX_ZONE_LENGTH];
+		strcopy(text, sizeof(text), sArgs);
+		StripQuotes(text);
 
 		// Or cancel renaming
 		if (StrEqual(text, "!stop", false) || StrEqual(text, "!cancel", false))
@@ -258,6 +254,10 @@ public Action:OnClientSayCommand(client, const String:command[], const String:sA
 	}
 	else if (RenamesZone[client])
 	{
+		decl String:text[MAX_ZONE_LENGTH];
+		strcopy(text, sizeof(text), sArgs);
+		StripQuotes(text);
+		
 		// Player is about to rename a zone
 		decl String:OldZoneName[MAX_ZONE_LENGTH];
 		RenamesZone[client] = false;
@@ -592,7 +592,7 @@ public Menu_ZoneOptions(Handle:menu, MenuAction:action, client, param)
 				}
 
 				// Always show a zone box
-				TE_SendBeamBoxToClient(client, FirstZoneVector[client], SecondZoneVector[client], LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 5.0, 5.0, 2, 1.0, { 0, 127, 255, 255 }, 0);
+				TE_SendBeamBoxToClient(client, FirstZoneVector[client], SecondZoneVector[client], LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 255, 127, 0, 255 }, 0);
 
 				// Highlight the currently edited edge for players editing a zone
 				if (EditingVector[client] == FIRST_VECTOR)
@@ -851,7 +851,7 @@ public Menu_ZoneVectorEdit(Handle:menu, MenuAction:action, client, param)
 			}
 
 			// Always show a zone box on every selection
-			TE_SendBeamBoxToClient(client, FirstZoneVector[client], SecondZoneVector[client], LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 5.0, 5.0, 2, 1.0, { 0, 127, 255, 255 }, 0);
+			TE_SendBeamBoxToClient(client, FirstZoneVector[client], SecondZoneVector[client], LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 255, 127, 0, 255 }, 0);
 
 			// Highlight the currently edited edge for players editing a zone
 			if (EditingVector[client] == FIRST_VECTOR)
@@ -1138,25 +1138,28 @@ public Action:Timer_ShowZones(Handle:timer)
 	for (new i; i < GetArraySize(ZonesArray); i++)
 	{
 		// Initialize positions, other stuff
-		decl Float:pos1[3], Float:pos2[3], client;
+		decl Float:pos1[3], Float:pos2[3];
 		new Handle:hZone = GetArrayCell(ZonesArray, i);
 
 		// Retrieve positions from array
 		GetArrayArray(hZone, FIRST_VECTOR,  pos1, VECTORS_SIZE);
 		GetArrayArray(hZone, SECOND_VECTOR, pos2, VECTORS_SIZE);
 
-		// Loop through all clients
-		for (client = 1; client <= MaxClients; client++)
+#if false
+		for (new client = 1; client <= MaxClients; client++)
 		{
 			if (IsClientInGame(client))
 			{
 				// If player is editing a zones - show all zones then
 				if (EditingZone[client] != INIT)
 				{
-					TE_SendBeamBoxToClient(client, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 5.0, 5.0, 2, 1.0, { 0, 127, 255, 255 }, 0);
+					TE_SendBeamBoxToClient(client, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 0, 127, 255, 255 }, 0);
 				}
 			}
 		}
+#else
+		TE_SendBeamBoxToClient(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 0, 127, 255, 200 }, 0);
+#endif
 	}
 }
 
@@ -1245,7 +1248,7 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "Magnitude", "-20.0");
+	DispatchKeyValue(zone, "Solidity", "2");
 	
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1297,7 +1300,7 @@ SpawnZone(zoneIndex)
 
 /* KillZone()
  *
- * Removes a trigger_multiple entity (zone) from a world.
+ * Removes a entity (zone) from a world.
  * -------------------------------------------------------------------------- */
 KillZone(zoneIndex)
 {
@@ -1426,27 +1429,39 @@ TE_SendBeamBoxToClient(client, const Float:upc[3], const Float:btc[3], ModelInde
 
 	// Draw all the edges
 	TE_SetupBeamPoints(upc, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(upc, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(upc, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc6, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc6, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc6, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc4, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc5, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc5, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc5, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc4, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc4, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient(client);
+	
+}
+
+TE_SendToClient2( iClient )
+{
+	if( iClient == 0 )
+	{
+		TE_SendToAll();
+	}
+	else
+	{
+		TE_SendToClient( iClient );
+	}
 }

@@ -448,8 +448,10 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
 		
-		ForcePlayerSuicide( iClient );
-		CreateTimer( 0.1, OnTimerCheckAlive, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
+		//ForcePlayerSuicide( iClient );
+		FakeClientCommand( iClient, "kill" );
+		
+		CreateTimer( 1.0, OnTimerCheckAlive, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 		
 		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );

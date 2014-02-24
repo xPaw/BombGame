@@ -7,7 +7,7 @@
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
-#define BRUSH_ENTITY      "trigger_multiple"
+#define BRUSH_ENTITY      "trigger_impact"
 
 enum // Just makes plugin readable
 {
@@ -1245,16 +1245,13 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "spawnflags", "64");
-	DispatchKeyValue(zone, "wait",       "0");
+	DispatchKeyValue(zone, "Magnitude", "-20.0");
 	
 	// Spawn an entity
 	DispatchSpawn(zone);
 
 	// Since its brush entity, use ActivateEntity as well
 	ActivateEntity(zone);
-
-	SetEntProp(zone, Prop_Data, "m_spawnflags", 64);
 
 	// Get the middle of zone
 	GetMiddleOfABox(m_vecMins, m_vecMaxs, middle);
@@ -1291,7 +1288,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
 	//SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
 	//SetEntProp(zone, Prop_Send, "m_usSolidFlags", 520);
 
@@ -1302,14 +1299,8 @@ SpawnZone(zoneIndex)
 	m_fEffects |= 0x020;
 	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
 	
-	HookSingleEntityOutput(zone, "OnStartTouch", OnTouch);
 	HookSingleEntityOutput(zone, "OnEndTouch",   OnTouch3);
 	HookSingleEntityOutput(zone, "OnTouching", OnTouch2);
-}
-
-public OnTouch(const String:output[], caller, activator, Float:delay)
-{
-	PrintToChatAll( "%i (%i) called OnStartTouch on one of the invisible walls!", caller, activator);
 }
 
 public OnTouch2(const String:output[], caller, activator, Float:delay)

@@ -66,12 +66,11 @@ public OnEntityCreated( iEntity, const String:szClassName[] )
 {
 	if( StrEqual( szClassName, "weapon_c4" ) )
 	{
-		PrintToChatAll( "C4 spawned, m_CollisionGroup: %i, m_MoveCollide: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ), GetEntProp( iEntity, Prop_Send, "m_MoveCollide" ) );
+		PrintToChatAll( "C4 spawned, m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 		
 		SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 2 );
-		SetEntProp( iEntity, Prop_Send, "m_MoveCollide", 2 );
 		
-		PrintToChatAll( "C4 changed, m_CollisionGroup: %i, m_MoveCollide: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ), GetEntProp( iEntity, Prop_Send, "m_MoveCollide" ) );
+		PrintToChatAll( "C4 changed, m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 	}
 }
 

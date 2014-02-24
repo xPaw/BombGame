@@ -448,11 +448,9 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
 		
-		PrintToChatAll( "Dead player %i - m_lifeState: %i", iClient, GetEntProp( iClient, Prop_Data, "m_lifeState" ) );
+		SetEntPropFloat( iClient, Prop_Data, "m_fNextSuicideTime", 0.0 ); // Remove this when sourcemod fixes ForcePlayerSuicide
 		
 		ForcePlayerSuicide( iClient );
-		
-		CreateTimer( 1.0, OnTimerCheckAlive, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 		
 		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
@@ -464,17 +462,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	//SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
-}
-
-public Action:OnTimerCheckAlive( Handle:hTimer, any:iSerial )
-{
-	new iClient = GetClientFromSerial( iSerial );
-	
-	if( iClient && IsPlayerAlive( iClient ) )
-	{
-		PrintToChatAll( "%i managed to stay alive, killing again... m_lifeState: %i", iClient, GetEntProp( iClient, Prop_Data, "m_lifeState" ) );
-		ForcePlayerSuicide( iClient );
-	}
 }
 
 public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )

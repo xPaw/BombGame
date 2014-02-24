@@ -75,6 +75,33 @@ public OnEntityCreated( iEntity, const String:szClassName[] )
 	}
 }
 
+public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
+{
+	PrintToChatAll( "CS_OnTerminateRound: delay: %f - reason: %i", delay, reason );
+	
+	switch( CSRoundEndReason:reason )
+	{
+		case CSRoundEnd_TargetBombed: PrintToChatAll( "CSRoundEnd_TargetBombed = Target Successfully Bombed!" );
+		case CSRoundEnd_VIPEscaped: PrintToChatAll( "CSRoundEnd_VIPEscaped = The VIP has escaped!" );
+		case CSRoundEnd_VIPKilled: PrintToChatAll( "CSRoundEnd_VIPKilled = VIP has been assassinated!" );
+		case CSRoundEnd_TerroristsEscaped: PrintToChatAll( "CSRoundEnd_TerroristsEscaped = The terrorists have escaped!" );
+		case CSRoundEnd_CTStoppedEscape: PrintToChatAll( "CSRoundEnd_CTStoppedEscape = The CTs have prevented most of the terrorists from escaping!" );
+		case CSRoundEnd_TerroristsStopped: PrintToChatAll( "CSRoundEnd_TerroristsStopped = Escaping terrorists have all been neutralized!" );
+		case CSRoundEnd_BombDefused: PrintToChatAll( "CSRoundEnd_BombDefused = The bomb has been defused!" );
+		case CSRoundEnd_CTWin: PrintToChatAll( "CSRoundEnd_CTWin = Counter-Terrorists Win!" );
+		case CSRoundEnd_TerroristWin: PrintToChatAll( "CSRoundEnd_TerroristWin = Terrorists Win!" );
+		case CSRoundEnd_Draw: PrintToChatAll( "CSRoundEnd_Draw = Round Draw!" );
+		case CSRoundEnd_HostagesRescued: PrintToChatAll( "CSRoundEnd_HostagesRescued = All Hostages have been rescued!" );
+		case CSRoundEnd_TargetSaved: PrintToChatAll( "CSRoundEnd_TargetSaved = Target has been saved!" );
+		case CSRoundEnd_HostagesNotRescued: PrintToChatAll( "CSRoundEnd_HostagesNotRescued = Hostages have not been rescued!" );
+		case CSRoundEnd_TerroristsNotEscaped: PrintToChatAll( "CSRoundEnd_TerroristsNotEscaped = Terrorists have not escaped!" );
+		case CSRoundEnd_VIPNotEscaped: PrintToChatAll( "CSRoundEnd_VIPNotEscaped = VIP has not escaped!" );
+		case CSRoundEnd_GameStart: PrintToChatAll( "CSRoundEnd_GameStart = Game Commencing!" );
+		case CSRoundEnd_TerroristsSurrender: PrintToChatAll( "CSRoundEnd_TerroristsSurrender = Terrorists Surrender" );
+		case CSRoundEnd_CTSurrender: PrintToChatAll( "CSRoundEnd_CTSurrender = CTs Surrender" );
+	}
+}
+
 public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );

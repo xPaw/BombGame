@@ -68,41 +68,6 @@ public OnPluginStart( )
 public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iStatsBombDropped++;
-	
-	new iEntity = GetClientOfUserId( GetEventInt( hEvent, "entindex" ) );
-	
-	PrintToChatAll( "C4 dropped [3], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
-	
-	//SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 5 );
-	
-	//PrintToChatAll( "C4 changed [4], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
-}
-
-public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
-{
-	PrintToChatAll( "CS_OnTerminateRound: delay: %f - reason: %i", delay, reason );
-	
-	switch( CSRoundEndReason:reason )
-	{
-		case CSRoundEnd_TargetBombed: PrintToChatAll( "CSRoundEnd_TargetBombed = Target Successfully Bombed!" );
-		case CSRoundEnd_VIPEscaped: PrintToChatAll( "CSRoundEnd_VIPEscaped = The VIP has escaped!" );
-		case CSRoundEnd_VIPKilled: PrintToChatAll( "CSRoundEnd_VIPKilled = VIP has been assassinated!" );
-		case CSRoundEnd_TerroristsEscaped: PrintToChatAll( "CSRoundEnd_TerroristsEscaped = The terrorists have escaped!" );
-		case CSRoundEnd_CTStoppedEscape: PrintToChatAll( "CSRoundEnd_CTStoppedEscape = The CTs have prevented most of the terrorists from escaping!" );
-		case CSRoundEnd_TerroristsStopped: PrintToChatAll( "CSRoundEnd_TerroristsStopped = Escaping terrorists have all been neutralized!" );
-		case CSRoundEnd_BombDefused: PrintToChatAll( "CSRoundEnd_BombDefused = The bomb has been defused!" );
-		case CSRoundEnd_CTWin: PrintToChatAll( "CSRoundEnd_CTWin = Counter-Terrorists Win!" );
-		case CSRoundEnd_TerroristWin: PrintToChatAll( "CSRoundEnd_TerroristWin = Terrorists Win!" );
-		case CSRoundEnd_Draw: PrintToChatAll( "CSRoundEnd_Draw = Round Draw!" );
-		case CSRoundEnd_HostagesRescued: PrintToChatAll( "CSRoundEnd_HostagesRescued = All Hostages have been rescued!" );
-		case CSRoundEnd_TargetSaved: PrintToChatAll( "CSRoundEnd_TargetSaved = Target has been saved!" );
-		case CSRoundEnd_HostagesNotRescued: PrintToChatAll( "CSRoundEnd_HostagesNotRescued = Hostages have not been rescued!" );
-		case CSRoundEnd_TerroristsNotEscaped: PrintToChatAll( "CSRoundEnd_TerroristsNotEscaped = Terrorists have not escaped!" );
-		case CSRoundEnd_VIPNotEscaped: PrintToChatAll( "CSRoundEnd_VIPNotEscaped = VIP has not escaped!" );
-		case CSRoundEnd_GameStart: PrintToChatAll( "CSRoundEnd_GameStart = Game Commencing!" );
-		case CSRoundEnd_TerroristsSurrender: PrintToChatAll( "CSRoundEnd_TerroristsSurrender = Terrorists Surrender" );
-		case CSRoundEnd_CTSurrender: PrintToChatAll( "CSRoundEnd_CTSurrender = CTs Surrender" );
-	}
 }
 
 public OnConfigsExecuted( )
@@ -415,7 +380,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	RemoveBomb( );
 	
-	new iPlayers, i, iAlivePlayer, Float:flDelay = 7.0;
+	new iPlayers, i, iAlivePlayer, Float:flDelay = 4.0;
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
@@ -443,7 +408,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		SetEventInt( hLeader, "userid", GetClientUserId( iAlivePlayer ) );
 		FireEvent( hLeader );
 		
-		flDelay = 10.0;
+		flDelay = 6.5;
 	}
 	
 	if( hTimer != INVALID_HANDLE )
@@ -490,9 +455,10 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	
 	if( g_iLastBomber == iClient )
 	{
+		SetEventString( hEvent, "weapon", "hegrenade" );
+		
 		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
 		{
-			SetEventString( hEvent, "weapon", "hegrenade" );
 			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
 		}
 	}
@@ -754,8 +720,6 @@ RemoveBomb( )
 	
 	while( ( iEntity = FindEntityByClassname( iEntity, "weapon_c4" ) ) != -1 )
 	{
-		PrintToChatAll( "Bomb %i - m_nSolidType: %i - m_CollisionGroup: %i - m_usSolidFlags: %i", iEntity, GetEntProp(iEntity, Prop_Data, "m_nSolidType"), GetEntProp(iEntity, Prop_Data, "m_CollisionGroup"), GetEntProp(iEntity, Prop_Data, "m_usSolidFlags"));
-		
 		AcceptEntityInput( iEntity, "kill" );
 	}
 }

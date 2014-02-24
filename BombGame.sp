@@ -229,6 +229,12 @@ public Action:OnTimerGiveBomb( Handle:hTimer, any:iSerial )
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	CS_SetTeamScore(CS_TEAM_CT, 13);
+	SetTeamScore(CS_TEAM_CT, 13);
+	
+	CS_SetTeamScore(CS_TEAM_T, 37);
+	SetTeamScore(CS_TEAM_T, 37);
+	
 	g_iLastBomber = 0;
 	g_iPreviousBomber = 0;
 	g_iStatsBombDropped = 0;
@@ -414,9 +420,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	if( hTimer != INVALID_HANDLE )
 	{
 		CS_TerminateRound( flDelay, CSRoundEnd_TargetBombed );
-		
-		CS_SetTeamScore(CS_TEAM_T, 99); 
-		SetTeamScore(CS_TEAM_T, 99); 
 	}
 }
 

@@ -448,8 +448,9 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
 		
-		//ForcePlayerSuicide( iClient );
-		FakeClientCommand( iClient, "kill" );
+		PrintToChatAll( "Dead player %i - m_lifeState: %i", iClient, GetEntProp( iClient, Prop_Data, "m_lifeState" ) );
+		
+		ForcePlayerSuicide( iClient );
 		
 		CreateTimer( 1.0, OnTimerCheckAlive, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 		
@@ -471,7 +472,7 @@ public Action:OnTimerCheckAlive( Handle:hTimer, any:iSerial )
 	
 	if( iClient && IsPlayerAlive( iClient ) )
 	{
-		PrintToChatAll( "%i managed to stay alive, killing again...", iClient );
+		PrintToChatAll( "%i managed to stay alive, killing again... m_lifeState: %i", iClient, GetEntProp( iClient, Prop_Data, "m_lifeState" ) );
 		ForcePlayerSuicide( iClient );
 	}
 }

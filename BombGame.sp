@@ -73,9 +73,9 @@ public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	PrintToChatAll( "C4 dropped [3], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 	
-	SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 5 );
+	//SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 5 );
 	
-	PrintToChatAll( "C4 changed [4], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
+	//PrintToChatAll( "C4 changed [4], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 }
 
 public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
@@ -370,7 +370,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times, bomber switched\x04 %i\x01 times.", g_iStatsBombDropped, g_iStatsBombSwitched );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times, bomber switched\x04 %i\x01 times during this round.", g_iStatsBombDropped, g_iStatsBombSwitched );
 		
 		g_iLastBomber = iBomber;
 		

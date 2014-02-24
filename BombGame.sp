@@ -337,9 +337,13 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd, _, TIMER_FLAG_NO_MAPCHANGE );
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
-		
-		g_flRoundTime = 0.0;
 	}
+	else
+	{
+		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEndWithNoGameRunning, _, TIMER_FLAG_NO_MAPCHANGE );
+	}
+	
+	g_flRoundTime = 0.0;
 }
 
 public Action:OnRoundSoundTimer( Handle:hTimer )
@@ -354,6 +358,15 @@ public Action:OnRoundArmSoundTimer( Handle:hTimer )
 	g_hTimerSound = INVALID_HANDLE;
 	
 	EmitSoundToAll( "ui/arm_bomb.wav" );
+}
+
+public Action:OnRoundTimerEndWithNoGameRunning( Handle:hTimer )
+{
+	g_hTimer = INVALID_HANDLE;
+	
+	CS_TerminateRound( 5.0, CSRoundEnd_Draw );
+	
+	PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Ending round..." );
 }
 
 public Action:OnRoundTimerEnd( Handle:hTimer )

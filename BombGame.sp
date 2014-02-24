@@ -52,6 +52,7 @@ public OnPluginStart( )
 	
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
+	RegConsoleCmd( "sm_start", OnCommandStart, "Start the game" );
 	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
@@ -62,7 +63,7 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
-	ServerCommand( "mp_restartgame 1" );
+	//ServerCommand( "mp_restartgame 1" );
 }
 
 public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -211,6 +212,18 @@ public Action:OnCommandStuck( iClient, iArguments )
 	return Plugin_Handled;
 }
 
+public Action:OnCommandStart( iClient, iArguments )
+{
+	if( !g_bStarting && !g_bGameRunning )
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Starting the game" );
+		
+		CS_TerminateRound( 5.0, CSRoundEnd_GameStart );
+	}
+	
+	return Plugin_Handled;
+}
+
 public Action:OnTimerGiveBomb( Handle:hTimer, any:iSerial )
 {
 	g_hTimerStuck = INVALID_HANDLE;
@@ -335,7 +348,7 @@ public Action:OnRoundTimerEndWithNoGameRunning( Handle:hTimer )
 {
 	g_hTimer = INVALID_HANDLE;
 	
-	CS_TerminateRound( 5.0, CSRoundEnd_Draw );
+	CS_TerminateRound( 5.0, CSRoundEnd_GameStart );
 	
 	PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Ending round..." );
 }

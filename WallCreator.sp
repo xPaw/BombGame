@@ -3,8 +3,7 @@
 #include < cstrike >
 
 #define PREFIX            " \x01\x0B\x04[Wall Creator]\x01 "
-//#define ZONES_MODEL       "models/error.mdl"
-#define ZONES_MODEL       "models/props/cs_office/vending_machine.mdl"
+#define ZONES_MODEL       "models/error.mdl"
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
@@ -1246,7 +1245,7 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "spawnflags", "72");
+	DispatchKeyValue(zone, "spawnflags", "64");
 	DispatchKeyValue(zone, "wait",       "0");
 	
 	// Spawn an entity
@@ -1255,7 +1254,7 @@ SpawnZone(zoneIndex)
 	// Since its brush entity, use ActivateEntity as well
 	ActivateEntity(zone);
 
-	SetEntProp(zone, Prop_Data, "m_spawnflags", 72);
+	SetEntProp(zone, Prop_Data, "m_spawnflags", 64);
 
 	// Get the middle of zone
 	GetMiddleOfABox(m_vecMins, m_vecMaxs, middle);
@@ -1300,10 +1299,11 @@ SpawnZone(zoneIndex)
 	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
-	m_fEffects |= 32;
+	m_fEffects |= 0x020;
 	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
 	
 	HookSingleEntityOutput(zone, "OnStartTouch", OnTouch);
+	HookSingleEntityOutput(zone, "OnEndTouch",   OnTouch3);
 	HookSingleEntityOutput(zone, "OnTouching", OnTouch2);
 }
 
@@ -1315,6 +1315,11 @@ public OnTouch(const String:output[], caller, activator, Float:delay)
 public OnTouch2(const String:output[], caller, activator, Float:delay)
 {
 	PrintToChatAll( "%i (%i) called OnTouching on one of the invisible walls!", caller, activator);
+}
+
+public OnTouch3(const String:output[], caller, activator, Float:delay)
+{
+	PrintToChatAll( "%i (%i) called OnEndTouch on one of the invisible walls!", caller, activator);
 }
 
 /* KillZone()

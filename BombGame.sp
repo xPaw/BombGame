@@ -484,6 +484,8 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 		{
 			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
 		}
+		
+		return Plugin_Changed;
 	}
 	else if( g_bDeadPlayers[ iClient ] )
 	{
@@ -540,6 +542,10 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	
 	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
+	
+	// TODO: test
+	new Handle:hHide = CreateEvent( "hide_freezepanel" );
+	FireEvent( hHide );
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

@@ -8,7 +8,7 @@
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
-#define BRUSH_ENTITY      "func_wall"
+#define BRUSH_ENTITY      "trigger_multiple"
 
 enum // Just makes plugin readable
 {
@@ -1246,6 +1246,7 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
+	DispatchKeyValue(zone, "spawnflags", "9");
 
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1289,7 +1290,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
+	//SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
 	//SetEntProp(zone, Prop_Send, "m_usSolidFlags", 520);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");

@@ -32,6 +32,8 @@ new g_iStatsBombSwitched;
 
 new g_iExplosionSprite;
 new g_iSmokeSprite;
+new g_iPlayerModel;
+new g_iPreviousPlayerModel;
 
 public OnPluginStart( )
 {
@@ -78,6 +80,8 @@ public OnConfigsExecuted( )
 	PrecacheSound( "items/ammo_pickup.wav" );
 	PrecacheSound( "training/countdown.wav" );
 	PrecacheSound( "weapons/hegrenade/explode3.wav" );
+	
+	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
 	
 	g_iExplosionSprite = PrecacheModel( "sprites/blueglow1.vmt" );
 	g_iSmokeSprite = PrecacheModel( "sprites/steam1.vmt" );
@@ -317,7 +321,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 spawned with the bomb!", szName );
 		
-		ShowRadar( g_iCurrentBomber );
+		MakeBomber( g_iCurrentBomber );
 		
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
@@ -499,6 +503,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( iClient == g_iCurrentBomber )
 	{
+		//SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
+		
 		g_iCurrentBomber = 0;
 		g_iLastBomber = iClient;
 		
@@ -557,12 +563,14 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
 		{
 			HideRadar( g_iCurrentBomber );
+			
+			SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
 		}
 		
 		g_iPreviousBomber = g_iCurrentBomber;
 		g_iCurrentBomber = iClient;
 		
-		ShowRadar( iClient );
+		MakeBomber( iClient );
 		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
@@ -598,6 +606,15 @@ public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM
 	new dummy;
 	
 	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
+}
+
+MakeBomber( iClient )
+{
+	ShowRadar( iClient );
+	
+	g_iPreviousPlayerModel = GetEntProp( iClient, Prop_Data, "m_nModelIndex", 2 );
+	
+	SetEntProp( iClient, Prop_Data, "m_nModelIndex", g_iPlayerModel, 2 );
 }
 
 EndRound( )

@@ -4,9 +4,6 @@
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
 
-#define BOMBER_SPEED   1.25
-#define BOMBER_GRAVITY 0.75
-
 public Plugin:myinfo =
 {
 	name = "BombGame",
@@ -315,9 +312,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		FakeClientCommand( g_iCurrentBomber, "use weapon_c4" );
 		
-		SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", BOMBER_SPEED );
-		SetEntityGravity( g_iCurrentBomber, BOMBER_GRAVITY );
-		
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
@@ -383,8 +377,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		
 		if( IsPlayerAlive( iBomber ) )
 		{
-			SetEntityGravity( iBomber, 1.0 );
-			
 			ForcePlayerSuicide( iBomber );
 			
 			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
@@ -512,8 +504,6 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		g_bDeadPlayers[ iClient ] = true;
 		
-		SetEntityGravity( iClient, 1.0 );
-		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
@@ -566,17 +556,11 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	{
 		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
 		{
-			SetEntPropFloat( g_iCurrentBomber, Prop_Send, "m_flLaggedMovementValue", 1.0 );
-			SetEntityGravity( g_iCurrentBomber, 1.0 );
-			
 			HideRadar( g_iCurrentBomber );
 		}
 		
 		g_iPreviousBomber = g_iCurrentBomber;
 		g_iCurrentBomber = iClient;
-		
-		SetEntPropFloat( iClient, Prop_Send, "m_flLaggedMovementValue", BOMBER_SPEED );
-		SetEntityGravity( iClient, BOMBER_GRAVITY );
 		
 		ShowRadar( iClient );
 		
@@ -660,11 +644,6 @@ ResetGame( )
 	for( new i = 1; i <= MaxClients; i++ )
 	{
 		g_bDeadPlayers[ i ] = false;
-	}
-	
-	if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
-	{
-		SetEntityGravity( g_iCurrentBomber, 1.0 );
 	}
 	
 	g_bStarting = false;

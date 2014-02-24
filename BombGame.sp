@@ -31,6 +31,9 @@ new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
 new Handle:g_hBlockedSounds;
 
+new g_iStatsBombDropped;
+new g_iStatsBombSwitched;
+
 new g_iExplosionSprite;
 new g_iSmokeSprite;
 
@@ -54,6 +57,7 @@ public OnPluginStart( )
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
+	HookEvent( "bomb_dropped",     OnBombDropped );
 	HookEvent( "player_spawn",     OnPlayerSpawn );
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
@@ -66,12 +70,25 @@ public OnEntityCreated( iEntity, const String:szClassName[] )
 {
 	if( StrEqual( szClassName, "weapon_c4" ) )
 	{
-		PrintToChatAll( "C4 spawned, m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
+		PrintToChatAll( "C4 spawned [1], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 		
 		SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 2 );
 		
-		PrintToChatAll( "C4 changed, m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
+		PrintToChatAll( "C4 changed [2], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 	}
+}
+
+public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	g_iStatsBombDropped++;
+	
+	new iEntity = GetClientOfUserId( GetEventInt( hEvent, "entindex" ) );
+	
+	PrintToChatAll( "C4 dropped [3], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
+	
+	SetEntProp( iEntity, Prop_Send, "m_CollisionGroup", 2 );
+	
+	PrintToChatAll( "C4 changed [4], m_CollisionGroup: %i", GetEntProp( iEntity, Prop_Send, "m_CollisionGroup" ) );
 }
 
 public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
@@ -262,6 +279,8 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 {
 	g_iLastBomber = 0;
 	g_iPreviousBomber = 0;
+	g_iStatsBombDropped = 0;
+	g_iStatsBombSwitched = 0;
 	
 	if( g_bMapHasHostages )
 	{
@@ -324,6 +343,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd, _, TIMER_FLAG_NO_MAPCHANGE );
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
+		
+		g_flRoundTime = 0.0;
 	}
 }
 
@@ -355,6 +376,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times, bomber switched\x04 %i\x01 times.", g_iStatsBombDropped, g_iStatsBombSwitched );
 		
 		g_iLastBomber = iBomber;
 		
@@ -450,7 +472,12 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
 		
-		CS_TerminateRound( 2.0, CSRoundEnd_CTWin );
+		PrintToChatAll( "g_flRoundTime: %f", g_flRoundTime );
+		
+		if( g_flRoundTime == 0.0 )
+		{
+			CS_TerminateRound( 2.0, CSRoundEnd_Draw );
+		}
 	}
 }
 
@@ -573,6 +600,8 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 has picked up the bomb!", szName );
 		
 		EmitSoundToAll( "buttons/blip2.wav", iClient );
+		
+		g_iStatsBombSwitched++;
 	}
 	else
 	{

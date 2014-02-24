@@ -289,6 +289,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	if( g_hTimerSound != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerSound );
+		
+		g_hTimerSound = INVALID_HANDLE;
 	}
 	
 	new iPlayers[ MaxClients ], iAlive, i;
@@ -712,6 +714,8 @@ CheckEnoughPlayers( iClient )
 	else
 	{
 		PrintToChatAll( "What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
+		
+		LogError( "Abnormal!! What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
 	}
 	
 	ResetGame( );

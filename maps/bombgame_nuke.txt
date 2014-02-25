@@ -1,4 +1,4 @@
-<font color='#ffffff'>BombGame Assault
+<font color='#ffffff'>BombGame Nuke
 
 Original map:</font>
 <font color='#ff9844'>Valve Software</font>

@@ -22,6 +22,7 @@ new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
 new g_iPreviousBomber;
+new bool:g_bIgnoreFirstRoundStart;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
 new Float:g_flRoundTime;
@@ -133,6 +134,8 @@ public OnMapStart( )
 	SetEntPropVector( iEntity, Prop_Send, "m_vecMins", Float:{ -1.0, -1.0, -1.0 } );
 	SetEntPropVector( iEntity, Prop_Send, "m_vecMaxs", Float:{ 1.0, 1.0, 1.0 } );
 	SetEntProp( iEntity, Prop_Send, "m_fEffects", 32 );
+	
+	g_bIgnoreFirstRoundStart = true;
 	
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
@@ -253,17 +256,22 @@ public Action:OnCommandStuck( iClient, iArguments )
 
 public Action:OnCommandStart( iClient, iArguments )
 {
-	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
+	if( g_bStarting || g_bGameRunning )
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 The game is already running." );
+	}
+	else if( !IsEnoughPlayersToPlay( ) )
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Not enough players to start the game." );
+	}
+	else
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
 		
 		g_bStarting = true;
+		g_bIgnoreFirstRoundStart = false;
 		
 		CS_TerminateRound( 3.0, CSRoundEnd_GameStart );
-	}
-	else
-	{
-		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Can't start the game now." );
 	}
 	
 	return Plugin_Handled;
@@ -310,18 +318,19 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
 	
-	if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
+	if( g_bIgnoreFirstRoundStart )
+	{
+		PrintToChatAll( "Ignoring first round start" );
+		
+		g_bIgnoreFirstRoundStart = false;
+		
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 If you want to start the game manually, say\x02 /start\x01" );
+	}
+	else if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
 	{
 		g_bStarting = true;
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
-	}
-	
-	if( g_hTimerStuck != INVALID_HANDLE )
-	{
-		CloseHandle( g_hTimerStuck );
-		
-		g_hTimerStuck = INVALID_HANDLE;
 	}
 }
 
@@ -400,13 +409,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		PrintToChatAll( "No game running" );
 		
-		if( iReason == CSRoundEnd_GameStart && flDelay == 0.5 )
-		{
-			PrintToChatAll( "Blocking GameStart" );
-			
-			return Plugin_Handled;
-		}
-		else if( iReason == CSRoundEnd_TargetSaved )
+		if( iReason == CSRoundEnd_TargetSaved )
 		{
 			iReason = CSRoundEnd_TargetBombed;
 			
@@ -414,6 +417,13 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		}
 		
 		return Plugin_Continue;
+	}
+	
+	if( g_hTimerStuck != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerStuck );
+		
+		g_hTimerStuck = INVALID_HANDLE;
 	}
 	
 	new iBomber = g_iCurrentBomber;
@@ -485,14 +495,11 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		FireEvent( hLeader );
 		
 		flDelay = 6.5;
+		iReason = CSRoundEnd_GameStart;
 	}
-	else
+	else if( iReason == CSRoundEnd_TargetSaved )
 	{
 		flDelay = 4.0;
-	}
-	
-	if( iReason == CSRoundEnd_TargetSaved )
-	{
 		iReason = CSRoundEnd_TargetBombed;
 	}
 	

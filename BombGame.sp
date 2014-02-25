@@ -608,12 +608,16 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		}
 		else if( iRagdoll > 0 )
 		{
-			new Float:v[ 3 ];
-			GetEntPropVector( iRagdoll, Prop_Data, "m_vecBaseVelocity", v );
+			new Float:vForce[ 3 ];
+			GetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce ); // m_vecForce
 			
-			PrintToChatAll( "ragdoll m_vecBaseVelocity: { %f, %f %f }", v[ 0 ], v[ 1 ], v[ 2 ] );
+			PrintToChatAll( "ragdoll m_vecRagdollVelocity: { %f, %f %f }", vForce[ 0 ], vForce[ 1 ], vForce[ 2 ] );
 			
-			SetEntPropVector( iRagdoll, Prop_Data, "m_vecBaseVelocity", Float:{ 0.0, 0.0, 200.0 } );
+			vForce[ 0 ] *= 15.0;
+			vForce[ 1 ] *= 15.0;
+			vForce[ 2 ] *= 15.0;
+			
+			SetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce );
 		}
 		
 		if( g_bGameRunning )

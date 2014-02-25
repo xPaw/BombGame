@@ -495,7 +495,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		FireEvent( hLeader );
 		
 		flDelay = 6.5;
-		iReason = CSRoundEnd_GameStart;
+		iReason = CSRoundEnd_TerroristWin;
 	}
 	else if( iReason == CSRoundEnd_TargetSaved )
 	{

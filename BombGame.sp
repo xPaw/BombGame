@@ -344,6 +344,13 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		}
 	}
 	
+	if( !g_bStarting )
+	{
+		PrintToChatAll( "g_bStarting is not true, not starting bombgame..." );
+		
+		return;
+	}
+	
 	g_bStarting = false;
 	
 	if( iAlive > 1 )
@@ -396,9 +403,11 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		if( iReason == CSRoundEnd_TargetSaved )
 		{
 			iReason = CSRoundEnd_TargetBombed;
+			
+			return Plugin_Changed;
 		}
 		
-		return Plugin_Changed;
+		return Plugin_Continue;
 	}
 	
 	new iBomber = g_iCurrentBomber;
@@ -586,16 +595,25 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	else
 	{
+		new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
+		
 		if( g_iLastBomber != iClient )
 		{
 			CheckEnoughPlayers( iClient );
-			
-			new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
 			
 			if( iRagdoll > 0 )
 			{
 				AcceptEntityInput( iRagdoll, "kill" );
 			}
+		}
+		else if( iRagdoll > 0 )
+		{
+			new Float:v[ 3 ];
+			GetEntPropVector( iRagdoll, Prop_Data, "m_vecBaseVelocity", v );
+			
+			PrintToChatAll( "ragdoll m_vecBaseVelocity: { %f, %f %f }", v[ 0 ], v[ 1 ], v[ 2 ] );
+			
+			SetEntPropVector( iRagdoll, Prop_Data, "m_vecBaseVelocity", Float:{ 0.0, 0.0, 200.0 } );
 		}
 		
 		if( g_bGameRunning )

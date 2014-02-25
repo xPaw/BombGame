@@ -24,7 +24,6 @@ new g_iCurrentBomber;
 new g_iPreviousBomber;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
-new bool:g_bIsBombgameNuke;
 new Float:g_flRoundTime;
 new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -57,8 +56,6 @@ public OnPluginStart( )
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
 	RegConsoleCmd( "sm_start", OnCommandStart, "Start the game" );
 	
-	RegConsoleCmd( "sm_test", OnCommandTest );
-	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
 	HookEvent( "bomb_pickup",      OnBombPickup );
@@ -69,22 +66,6 @@ public OnPluginStart( )
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
 	//ServerCommand( "mp_restartgame 1" );
-}
-
-public Action:OnCommandTest( iClient, iArguments )
-{
-	if( g_bIsBombgameNuke )
-	{
-		DoFancyLightsOnNuke( );
-		
-		ReplyToCommand( iClient, "OK" );
-	}
-	else
-	{
-		ReplyToCommand( iClient, "Not nuke" );
-	}
-	
-	return Plugin_Handled;
 }
 
 public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -148,16 +129,12 @@ public OnMapStart( )
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
 	
-	g_bIsNuke = g_bIsBombgameNuke = StrEqual( szMap, "de_nuke", false );
+	g_bIsNuke = StrEqual( szMap, "de_nuke", false );
 	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
 	
 	if( g_bIsNuke )
 	{
 		InitializeNuke( );
-	}
-	else
-	{
-		g_bIsBombgameNuke = StrEqual( szMap, "bombgame_nuke", false );
 	}
 	
 	CreateTimer( 1.0, OnTimerCreateBot, _, TIMER_FLAG_NO_MAPCHANGE );
@@ -202,6 +179,11 @@ public OnMapEnd( )
 	{
 		KickClient( g_iFakeClient, "Map end" );
 	}
+}
+
+public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
+{
+	PrintToChatAll( "CS_OnTerminateRound(%f, %i)", delay, reason );
 }
 
 public OnClientDisconnect( iClient )
@@ -454,12 +436,6 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 			
 			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 		}
-		
-		// Fancy lights
-		if( g_bIsBombgameNuke )
-		{
-			DoFancyLightsOnNuke( );
-		}
 	}
 	
 	g_bStarting = true;
@@ -517,7 +493,10 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	{
 		PrintToChatAll( "Fake client spawned: %i", iClient );
 		
-		SetEntProp( iClient, Prop_Send, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Send, "m_fEffects" ) | 0x020 );
+		SetEntityMoveType( iClient, MOVETYPE_NOCLIP );
+		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
+		SetEntProp( iClient, Prop_Data, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Data, "m_fEffects" ) | 0x020 );
+		TeleportEntity( iClient, Float:{ 0.0, 0.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
 		
 		return;
 	}
@@ -833,45 +812,6 @@ RemoveBomb( )
 	while( ( iEntity = FindEntityByClassname( iEntity, "weapon_c4" ) ) != -1 )
 	{
 		AcceptEntityInput( iEntity, "kill" );
-	}
-}
-
-DoFancyLightsOnNuke( )
-{
-	// env_sprite    - emerg_sprite - ShowSprite
-	// prop_dynamic  - emerg_base   - Skin "1"
-	// prop_dynamic  - emerg_glow   - Skin "1"
-	// func_rotating - emerg_rot    - StartForward
-
-	new iEntity, String:szTargetName[ 14 ];
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "env_sprite" ) ) != -1 )
-	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szTargetName, sizeof( szTargetName ) ) && StrEqual( szTargetName, "emerg_sprite" ) )
-		{
-			AcceptEntityInput( iEntity, "ShowSprite" );
-		}
-	}
-	
-	iEntity = -1;
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "prop_dynamic" ) ) != -1 )
-	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szTargetName, sizeof( szTargetName ) ) && StrContains( szTargetName, "emerg_" ) == 0 )
-		{
-			SetVariantInt( 1 );
-			AcceptEntityInput( iEntity, "Skin" );
-		}
-	}
-	
-	iEntity = -1;
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "func_rotating" ) ) != -1 )
-	{
-		if( GetEntPropString( iEntity, Prop_Data, "m_iName", szTargetName, sizeof( szTargetName ) ) && StrContains( szTargetName, "emerg_rot" ) == 0 )
-		{
-			AcceptEntityInput( iEntity, "StartForward" );
-		}
 	}
 }
 

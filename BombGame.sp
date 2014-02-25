@@ -400,7 +400,13 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		PrintToChatAll( "No game running" );
 		
-		if( iReason == CSRoundEnd_TargetSaved )
+		if( iReason == CSRoundEnd_GameStart && flDelay == 0.5 )
+		{
+			PrintToChatAll( "Blocking GameStart" );
+			
+			return Plugin_Handled;
+		}
+		else if( iReason == CSRoundEnd_TargetSaved )
 		{
 			iReason = CSRoundEnd_TargetBombed;
 			
@@ -609,13 +615,23 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		else if( iRagdoll > 0 )
 		{
 			new Float:vForce[ 3 ];
-			GetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce ); // m_vecForce
+			GetEntPropVector( iRagdoll, Prop_Send, "m_vecForce", vForce );
 			
-			PrintToChatAll( "ragdoll m_vecRagdollVelocity: { %f, %f %f }", vForce[ 0 ], vForce[ 1 ], vForce[ 2 ] );
+			PrintToChatAll( "Ragdoll m_vecForce: { %f, %f %f }", vForce[ 0 ], vForce[ 1 ], vForce[ 2 ] );
 			
 			vForce[ 0 ] *= 15.0;
 			vForce[ 1 ] *= 15.0;
 			vForce[ 2 ] *= 15.0;
+			
+			SetEntPropVector( iRagdoll, Prop_Send, "m_vecForce", vForce );
+			
+			GetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce );
+			
+			PrintToChatAll( "Ragdoll m_vecRagdollVelocity: { %f, %f %f }", vForce[ 0 ], vForce[ 1 ], vForce[ 2 ] );
+			
+			vForce[ 0 ] *= 150.0;
+			vForce[ 1 ] *= 150.0;
+			vForce[ 2 ] *= 150.0;
 			
 			SetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce );
 		}

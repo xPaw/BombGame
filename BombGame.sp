@@ -16,6 +16,7 @@ public Plugin:myinfo =
 new g_bDeadPlayers[ MAXPLAYERS ] = { false, ... };
 new g_bStarting;
 new g_bGameRunning;
+new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
 new g_iPreviousBomber;
@@ -175,10 +176,22 @@ public OnMapEnd( )
 	}
 	
 	ResetGame( );
+	
+	if( g_iFakeClient )
+	{
+		KickClient( g_iFakeClient, "Map end" );
+	}
 }
 
 public OnClientDisconnect( iClient )
 {
+	if( g_iFakeClient == iClient )
+	{
+		g_iFakeClient = 0;
+		
+		return;
+	}
+	
 	if( iClient == g_iCurrentBomber )
 	{
 		g_iCurrentBomber = 0;
@@ -203,6 +216,22 @@ public OnClientPutInServer( iClient )
 	if( g_bGameRunning )
 	{
 		g_bDeadPlayers[ iClient ] = true;
+	}
+	
+	if( !g_iFakeClient )
+	{
+		g_iFakeClient = CreateFakeClient( "BombGame Coach" );
+		
+		if( g_iFakeClient > 0 )
+		{
+			CS_SwitchTeam( g_iFakeClient, CS_TEAM_CT );
+			
+			//SetEntProp( g_iFakeClient, Prop_Send, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Send, "m_fEffects" ) | 0x020 );
+		}
+		else
+		{
+			LogError( "Failed to create a fake player")
+		}
 	}
 }
 
@@ -322,7 +351,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
+		if( IsPlayerBombGamer( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
 		}
@@ -437,7 +466,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
+		if( IsPlayerBombGamer( i ) )
 		{
 			iAlivePlayer = i;
 			iPlayers++;
@@ -670,13 +699,18 @@ EndRound( )
 	OnRoundTimerEnd( INVALID_HANDLE );
 }
 
+IsPlayerBombGamer( iClient )
+{
+	return IsClientInGame( iClient ) && IsPlayerAlive( iClient ) && GetClientTeam( iClient ) == CS_TEAM_T;
+}
+
 IsEnoughPlayersToPlay( )
 {
 	new iPlayers, i;
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsClientInGame( i ) && IsPlayerAlive( i ) )
+		if( IsPlayerBombGamer( i ) )
 		{
 			iPlayers++;
 			
@@ -714,7 +748,7 @@ CheckEnoughPlayers( iClient )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( i != iClient && IsClientInGame( i ) && IsPlayerAlive( i ) )
+		if( i != iClient && IsPlayerBombGamer( i ) )
 		{
 			iAlive++;
 			

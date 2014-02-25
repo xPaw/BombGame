@@ -232,7 +232,11 @@ public Action:OnCommandStuck( iClient, iArguments )
 	}
 	else if( IsPlayerAlive( iClient ) )
 	{
-		if( GetPlayerWeaponSlot( iClient, CS_SLOT_C4 ) == -1 )
+		if( g_hTimerStuck != INVALID_HANDLE )
+		{
+			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 You're already waiting for the bomb." );
+		}
+		else if( GetPlayerWeaponSlot( iClient, CS_SLOT_C4 ) == -1 )
 		{
 			g_hTimerStuck = CreateTimer( 5.0, OnTimerGiveBomb, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 			
@@ -255,7 +259,7 @@ public Action:OnCommandStart( iClient, iArguments )
 		
 		g_bStarting = true;
 		
-		CS_TerminateRound( 5.0, CSRoundEnd_Draw );
+		CS_TerminateRound( 3.0, CSRoundEnd_GameStart );
 	}
 	else
 	{
@@ -311,6 +315,13 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		g_bStarting = true;
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
+	}
+	
+	if( g_hTimerStuck != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerStuck );
+		
+		g_hTimerStuck = INVALID_HANDLE;
 	}
 }
 
@@ -382,7 +393,12 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		PrintToChatAll( "No game running" );
 		
-		return;
+		if( iReason == CSRoundEnd_TargetSaved )
+		{
+			iReason = CSRoundEnd_TargetBombed;
+		}
+		
+		return Plugin_Handled;
 	}
 	
 	new iBomber = g_iCurrentBomber;
@@ -464,6 +480,10 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		iReason = CSRoundEnd_TargetBombed;
 	}
+	
+	PrintToChatAll( "Handling round end" );
+	
+	return Plugin_Handled;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -569,6 +589,13 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		if( g_iLastBomber != iClient )
 		{
 			CheckEnoughPlayers( iClient );
+			
+			new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
+			
+			if( iRagdoll > 0 )
+			{
+				AcceptEntityInput( iRagdoll, "kill" );
+			}
 		}
 		
 		if( g_bGameRunning )
@@ -577,14 +604,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		}
 	}
 	
-	new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
-	
-	if( iRagdoll > 0 )
-	{
-		AcceptEntityInput( iRagdoll, "kill" );
-	}
-	
-	ClientCommand( iClient, "playgamesound Music.StopAllMusic" );
+	ClientCommand( iClient, "playgamesound Music.StopAllMusic" ); // TODO: This gets blocked clientside
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

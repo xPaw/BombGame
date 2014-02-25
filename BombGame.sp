@@ -48,6 +48,12 @@ public OnPluginStart( )
 	SetTrieValue( g_hBlockedSounds, "player/death4.wav", 1 );
 	SetTrieValue( g_hBlockedSounds, "player/death5.wav", 1 );
 	SetTrieValue( g_hBlockedSounds, "player/death6.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "weapons/knife/knife_stab.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "weapons/knife/knife_hit1.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "weapons/knife/knife_hit2.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "weapons/knife/knife_hit3.wav", 1 );
+	SetTrieValue( g_hBlockedSounds, "weapons/knife/knife_hit4.wav", 1 );
+	// knife_hitwall1-4
 	
 	AddNormalSoundHook( OnNormalSound );
 	
@@ -648,8 +654,6 @@ public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool
 public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM_MAX_PATH ], &entity, &channel, &Float:volume, &level, &pitch, &flags )
 {
 	new dummy;
-	
-	PrintToChatAll( "Sound: %s", sample );
 	
 	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
 }

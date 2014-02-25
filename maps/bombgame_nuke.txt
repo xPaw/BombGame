@@ -1,0 +1,7 @@
+<font color='#ffffff'>BombGame Assault
+
+Original map:</font>
+<font color='#ff9844'>Valve Software</font>
+
+<font color='#ffffff'>Cut down version:</font>
+<font color='#ff9844'>xPaw</font>

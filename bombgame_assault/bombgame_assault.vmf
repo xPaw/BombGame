@@ -2,7 +2,7 @@ versioninfo
 {
 	"editorversion" "400"
 	"editorbuild" "6307"
-	"mapversion" "65"
+	"mapversion" "68"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -20,7 +20,7 @@ viewsettings
 world
 {
 	"id" "0"
-	"mapversion" "65"
+	"mapversion" "68"
 	"classname" "worldspawn"
 	"detailmaterial" "detail/detailsprites"
 	"detailvbsp" "detail.vbsp"
@@ -8328,7 +8328,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "288 -30 8"
+	"origin" "290 -17 -39.4"
 	editor
 	{
 		"color" "220 30 220"
@@ -8344,7 +8344,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "359 -28 8.39999"
+	"origin" "350 -22 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8360,7 +8360,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "357 52 8.7"
+	"origin" "351 53 -38.7"
 	editor
 	{
 		"color" "220 30 220"
@@ -8376,7 +8376,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "286 50 8.39999"
+	"origin" "291 52 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8392,7 +8392,7 @@ entity
 	"angles" "0 180 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "338 136 8.39999"
+	"origin" "338 136 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8408,7 +8408,7 @@ entity
 	"angles" "0 225 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "152.518 122.654 8.39999"
+	"origin" "152.518 122.654 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8424,7 +8424,7 @@ entity
 	"angles" "0 270 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "59.2882 115.519 8.39999"
+	"origin" "59.2882 115.519 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8440,7 +8440,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "62 -63 8.39999"
+	"origin" "62 -63 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8456,7 +8456,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "141.654 -60.6983 8.7"
+	"origin" "137 -52 -38.7"
 	editor
 	{
 		"color" "220 30 220"
@@ -8472,7 +8472,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "139.654 19.3017 9.10001"
+	"origin" "139.654 19.3017 -38.3"
 	editor
 	{
 		"color" "220 30 220"
@@ -8488,7 +8488,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "60 17 8.7"
+	"origin" "60 17 -38.7"
 	editor
 	{
 		"color" "220 30 220"
@@ -8504,7 +8504,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "63.6537 -153.698 8.39999"
+	"origin" "63.6537 -153.698 -39"
 	editor
 	{
 		"color" "220 30 220"
@@ -8520,7 +8520,7 @@ entity
 	"angles" "0 270 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-92.712 181.735 10.4"
+	"origin" "-92.712 181.735 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8536,7 +8536,7 @@ entity
 	"angles" "0 270 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-189.346 183.519 10.4"
+	"origin" "-189.346 183.519 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8552,7 +8552,7 @@ entity
 	"angles" "0 270 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-175.712 267.519 10.4"
+	"origin" "-175.712 267.519 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8568,7 +8568,7 @@ entity
 	"angles" "0 270 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-88.712 92.735 10.4"
+	"origin" "-88.712 92.735 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8584,7 +8584,7 @@ entity
 	"angles" "0 270 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-185.346 94.519 10.4"
+	"origin" "-185.346 94.519 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8600,7 +8600,7 @@ entity
 	"angles" "0 45 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-105.712 -15.2646 10.4"
+	"origin" "-105.712 -15.2646 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8616,7 +8616,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-189.346 -13.4815 10.4"
+	"origin" "-189.346 -13.4815 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8632,7 +8632,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-119.346 -255.698 10.4"
+	"origin" "-119.346 -255.698 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8648,7 +8648,7 @@ entity
 	"angles" "0 90 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-124.346 -136.698 10.4"
+	"origin" "-124.346 -136.698 -37"
 	editor
 	{
 		"color" "220 30 220"
@@ -8664,7 +8664,7 @@ entity
 	"angles" "0 0 0"
 	"enabled" "1"
 	"spawnflags" "0"
-	"origin" "-251 -265 12.4"
+	"origin" "-251 -254 -35"
 	editor
 	{
 		"color" "220 30 220"

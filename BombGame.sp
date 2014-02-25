@@ -1,3 +1,5 @@
+#pragma semicolon 1
+
 #include < sourcemod >
 #include < sdktools >
 #include < cstrike >
@@ -157,6 +159,27 @@ public OnMapStart( )
 	{
 		g_bIsBombgameNuke = StrEqual( szMap, "bombgame_nuke", false );
 	}
+	
+	CreateTimer( 1.0, OnTimerCreateBot, _, TIMER_FLAG_NO_MAPCHANGE );
+}
+
+public Action:OnTimerCreateBot( Handle:hTimer )
+{
+	if( !g_iFakeClient || !IsClientInGame( g_iFakeClient ) )
+	{
+		g_iFakeClient = CreateFakeClient( "BombGame Coach" );
+		
+		if( g_iFakeClient > 0 )
+		{
+			CS_SwitchTeam( g_iFakeClient, CS_TEAM_CT );
+			
+			//SetEntProp( g_iFakeClient, Prop_Send, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Send, "m_fEffects" ) | 0x020 );
+		}
+		else
+		{
+			LogError( "Failed to create a fake player" );
+		}
+	}
 }
 
 public OnMapEnd( )
@@ -216,22 +239,6 @@ public OnClientPutInServer( iClient )
 	if( g_bGameRunning )
 	{
 		g_bDeadPlayers[ iClient ] = true;
-	}
-	
-	if( !g_iFakeClient )
-	{
-		g_iFakeClient = CreateFakeClient( "BombGame Coach" );
-		
-		if( g_iFakeClient > 0 )
-		{
-			CS_SwitchTeam( g_iFakeClient, CS_TEAM_CT );
-			
-			//SetEntProp( g_iFakeClient, Prop_Send, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Send, "m_fEffects" ) | 0x020 );
-		}
-		else
-		{
-			LogError( "Failed to create a fake player")
-		}
 	}
 }
 

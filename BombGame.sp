@@ -398,7 +398,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			iReason = CSRoundEnd_TargetBombed;
 		}
 		
-		return Plugin_Handled;
+		return Plugin_Changed;
 	}
 	
 	new iBomber = g_iCurrentBomber;
@@ -483,7 +483,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	
 	PrintToChatAll( "Handling round end" );
 	
-	return Plugin_Handled;
+	return Plugin_Changed;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

@@ -499,7 +499,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	}
 	else if( iReason == CSRoundEnd_TargetSaved )
 	{
-		flDelay = 4.0;
+		flDelay = 5.0;
 		iReason = CSRoundEnd_TargetBombed;
 	}
 	
@@ -532,8 +532,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	if( g_bDeadPlayers[ iClient ] )
 	{
 		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
-		
-		SetEntPropFloat( iClient, Prop_Data, "m_fNextSuicideTime", 0.0 ); // Remove this when sourcemod fixes ForcePlayerSuicide
 		
 		ForcePlayerSuicide( iClient );
 		
@@ -608,39 +606,16 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	else
 	{
-		new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
-		
 		if( g_iLastBomber != iClient )
 		{
 			CheckEnoughPlayers( iClient );
+			
+			new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
 			
 			if( iRagdoll > 0 )
 			{
 				AcceptEntityInput( iRagdoll, "kill" );
 			}
-		}
-		else if( iRagdoll > 0 )
-		{
-			new Float:vForce[ 3 ];
-			GetEntPropVector( iRagdoll, Prop_Send, "m_vecForce", vForce );
-			
-			PrintToChatAll( "Ragdoll m_vecForce: { %f, %f %f }", vForce[ 0 ], vForce[ 1 ], vForce[ 2 ] );
-			
-			vForce[ 0 ] *= 15.0;
-			vForce[ 1 ] *= 15.0;
-			vForce[ 2 ] *= 15.0;
-			
-			SetEntPropVector( iRagdoll, Prop_Send, "m_vecForce", vForce );
-			
-			GetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce );
-			
-			PrintToChatAll( "Ragdoll m_vecRagdollVelocity: { %f, %f %f }", vForce[ 0 ], vForce[ 1 ], vForce[ 2 ] );
-			
-			vForce[ 0 ] *= 150.0;
-			vForce[ 1 ] *= 150.0;
-			vForce[ 2 ] *= 150.0;
-			
-			SetEntPropVector( iRagdoll, Prop_Send, "m_vecRagdollVelocity", vForce );
 		}
 		
 		if( g_bGameRunning )

@@ -172,8 +172,6 @@ public Action:OnTimerCreateBot( Handle:hTimer )
 		if( g_iFakeClient > 0 )
 		{
 			CS_SwitchTeam( g_iFakeClient, CS_TEAM_CT );
-			
-			//SetEntProp( g_iFakeClient, Prop_Send, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Send, "m_fEffects" ) | 0x020 );
 		}
 		else
 		{
@@ -509,6 +507,20 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
+	
+	if( !IsPlayerAlive( iClient ) )
+	{
+		return;
+	}
+	
+	if( IsFakeClient( iClient ) )
+	{
+		PrintToChatAll( "Fake client spawned: %i", iClient );
+		
+		SetEntProp( iClient, Prop_Send, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Send, "m_fEffects" ) | 0x020 );
+		
+		return;
+	}
 	
 	if( g_bDeadPlayers[ iClient ] )
 	{

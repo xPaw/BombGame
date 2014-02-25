@@ -25,7 +25,6 @@ new g_iPreviousBomber;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
 new Float:g_flRoundTime;
-new Handle:g_hTimer = INVALID_HANDLE;
 new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
 new Handle:g_hBlockedSounds;
@@ -68,9 +67,12 @@ public OnPluginStart( )
 	//ServerCommand( "mp_restartgame 1" );
 }
 
-public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+public OnPluginEnd( )
 {
-	g_iStatsBombDropped++;
+	if( g_iFakeClient )
+	{
+		KickClient( g_iFakeClient, "Plugin end" );
+	}
 }
 
 public OnConfigsExecuted( )
@@ -159,13 +161,6 @@ public Action:OnTimerCreateBot( Handle:hTimer )
 
 public OnMapEnd( )
 {
-	if( g_hTimer != INVALID_HANDLE )
-	{
-		CloseHandle( g_hTimer );
-		
-		g_hTimer = INVALID_HANDLE;
-	}
-	
 	if( g_hTimerSound != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerSound );
@@ -179,11 +174,6 @@ public OnMapEnd( )
 	{
 		KickClient( g_iFakeClient, "Map end" );
 	}
-}
-
-public Action:CS_OnTerminateRound(&Float:delay, &CSRoundEndReason:reason)
-{
-	PrintToChatAll( "CS_OnTerminateRound(%f, %i)", delay, reason );
 }
 
 public OnClientDisconnect( iClient )
@@ -205,8 +195,6 @@ public OnClientDisconnect( iClient )
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s left the game while being the bomber.", szName );
 		
 		EndRound( );
-		
-		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
 	else
 	{
@@ -322,11 +310,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	if( g_hTimer != INVALID_HANDLE )
-	{
-		CloseHandle( g_hTimer );
-	}
-	
 	if( g_hTimerSound != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerSound );
@@ -365,12 +348,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
-		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEnd, _, TIMER_FLAG_NO_MAPCHANGE );
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
-	}
-	else
-	{
-		g_hTimer = CreateTimer( g_flRoundTime, OnRoundTimerEndWithNoGameRunning, _, TIMER_FLAG_NO_MAPCHANGE );
 	}
 	
 	g_flRoundTime = 0.0;
@@ -390,18 +368,16 @@ public Action:OnRoundArmSoundTimer( Handle:hTimer )
 	EmitSoundToAll( "ui/arm_bomb.wav" );
 }
 
-public Action:OnRoundTimerEndWithNoGameRunning( Handle:hTimer )
+public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 {
-	g_hTimer = INVALID_HANDLE;
+	PrintToChatAll( "CS_OnTerminateRound(%f, %i)", flDelay, iReason );
 	
-	CS_TerminateRound( 5.0, CSRoundEnd_Draw );
-	
-	PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Ending round..." );
-}
-
-public Action:OnRoundTimerEnd( Handle:hTimer )
-{
-	g_hTimer = INVALID_HANDLE;
+	if( !g_bGameRunning )
+	{
+		PrintToChatAll( "No game running" );
+		
+		return;
+	}
 	
 	new iBomber = g_iCurrentBomber;
 	
@@ -443,7 +419,7 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 	
 	RemoveBomb( );
 	
-	new iPlayers, i, iAlivePlayer, Float:flDelay = 4.0;
+	new iPlayers, i, iAlivePlayer;
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
@@ -473,10 +449,14 @@ public Action:OnRoundTimerEnd( Handle:hTimer )
 		
 		flDelay = 6.5;
 	}
-	
-	if( hTimer != INVALID_HANDLE )
+	else
 	{
-		CS_TerminateRound( flDelay, CSRoundEnd_TargetBombed );
+		flDelay = 4.0;
+	}
+	
+	if( iReason == CSRoundEnd_TargetSaved )
+	{
+		iReason = CSRoundEnd_TargetBombed;
 	}
 }
 
@@ -577,8 +557,6 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s suicided while being the bomber.", szName );
 		
 		EndRound( );
-		
-		CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 	}
 	else
 	{
@@ -648,6 +626,11 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	}
 }
 
+public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	g_iStatsBombDropped++;
+}
+
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
@@ -666,6 +649,8 @@ public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM
 {
 	new dummy;
 	
+	PrintToChatAll( "Sound: %s", sample );
+	
 	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
 }
 
@@ -680,13 +665,6 @@ MakeBomber( iClient )
 
 EndRound( )
 {
-	if( g_hTimer != INVALID_HANDLE )
-	{
-		CloseHandle( g_hTimer );
-		
-		g_hTimer = INVALID_HANDLE;
-	}
-	
 	if( g_hTimerSound != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerSound );
@@ -694,7 +672,7 @@ EndRound( )
 		g_hTimerSound = INVALID_HANDLE;
 	}
 	
-	OnRoundTimerEnd( INVALID_HANDLE );
+	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 }
 
 IsPlayerBombGamer( iClient )

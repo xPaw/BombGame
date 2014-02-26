@@ -430,7 +430,28 @@ public Action:OnRoundArmSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
-	EmitSoundToAll( "ui/arm_bomb.wav" );
+	//EmitSoundToAll( "ui/arm_bomb.wav" );
+	
+	if( !g_iCurrentBomber || !IsPlayerAlive( g_iCurrentBomber ) )
+	{
+		return;
+	}
+	
+	new Float:vPosition[ 3 ];
+	GetClientEyePosition( g_iCurrentBomber, vPosition );
+	
+	new iExplosion = CreateEntityByName( "planted_c4_training" );
+	
+	if( iExplosion != -1 )
+	{
+		DispatchKeyValueVector( iExplosion, "Origin", vPosition );
+		DispatchSpawn( iExplosion );
+		
+		SetEntityMoveType( iExplosion, MOVETYPE_FLYGRAVITY );
+		
+		SetVariantFloat( 1.0 );
+		AcceptEntityInput( iExplosion, "ActivateSetTimerLength" );
+	}
 }
 
 public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
@@ -480,20 +501,6 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			
 			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
 			
-			new Float:vPosition[ 3 ];
-			GetClientEyePosition( iBomber, vPosition );
-			
-			new iExplosion = CreateEntityByName( "planted_c4_training" );
-			
-			if( iExplosion != -1 )
-			{
-				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-				DispatchSpawn( iExplosion );
-				
-				SetVariantFloat( 0.0 );
-				AcceptEntityInput( iExplosion, "ActivateSetTimerLength" );
-			}
-			
 			/*new iExplosion = CreateEntityByName( "env_explosion" );
 			
 			if( iExplosion != -1 )
@@ -506,7 +513,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 				AcceptEntityInput( iExplosion, "Kill" );
 			}*/
 			
-			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
+			//EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 		}
 	}
 	

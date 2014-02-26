@@ -488,9 +488,20 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			if( iExplosion != -1 )
 			{
 				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-				DispatchKeyValue( iExplosion, "iMagnitude", "100" );
-				DispatchKeyValue( iExplosion, "iRadiusOverride", "200" );
+				DispatchKeyValue( iExplosion, "iMagnitude", "0" );
 				DispatchKeyValue( iExplosion, "spawnflags", "128" );
+				DispatchSpawn( iExplosion );
+				AcceptEntityInput( iExplosion, "Explode" );
+				AcceptEntityInput( iExplosion, "Kill" );
+			}
+			
+			iExplosion = CreateEntityByName( "env_physexplosion" );
+			
+			if( iExplosion != -1 )
+			{
+				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
+				DispatchKeyValue( iExplosion, "iMagnitude", "100" );
+				DispatchKeyValue( iExplosion, "spawnflags", "3" );
 				DispatchSpawn( iExplosion );
 				AcceptEntityInput( iExplosion, "Explode" );
 				AcceptEntityInput( iExplosion, "Kill" );

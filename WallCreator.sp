@@ -1248,7 +1248,8 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "Solid", "2");
+	DispatchKeyValue(zone, "solid", "2");
+	DispatchKeyValue(zone, "model", ZONES_MODEL);
 	
 	// Spawn an entity
 	DispatchSpawn(zone);

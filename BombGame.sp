@@ -61,6 +61,7 @@ public OnPluginStart( )
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
 	RegConsoleCmd( "sm_start", OnCommandStart, "Start the game" );
+	RegConsoleCmd( "sm_test", OnCommandTest, "Start the game" );
 	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
@@ -72,6 +73,27 @@ public OnPluginStart( )
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
 	//ServerCommand( "mp_restartgame 1" );
+}
+
+public Action:OnCommandTest( iClient, iArguments )
+{
+	new Float:vPosition[ 3 ];
+	GetClientEyePosition( iClient, vPosition );
+	
+	new iExplosion = CreateEntityByName( "env_explosion" );
+	
+	if( iExplosion != -1 )
+	{
+		DispatchKeyValueVector( iExplosion, "Origin", vPosition );
+		DispatchSpawn( iExplosion );
+		
+		SetVariantFloat( 10.0 );
+		AcceptEntityInput( iExplosion, "ActivateSetTimerLength" );
+	}
+	
+	ReplyToCommand( iClient, "OK." );
+	
+	return Plugin_Handled;
 }
 
 public OnPluginEnd( )
@@ -125,15 +147,29 @@ public OnMapStart( )
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
+	// Edit info_map_parameters
+	iEntity = FindEntityByClassname( iEntity, "info_map_parameters" );
+	
+	if( iEntity != -1 )
+	{
+		DispatchKeyValue( iEntity, "buying", "0" );
+		DispatchKeyValue( iEntity, "petpopulation", "50" );
+		DispatchSpawn( iEntity );
+	}
+	
 	// Create fake bomb spot
 	iEntity = CreateEntityByName( "func_bomb_target" );
-	DispatchKeyValue( iEntity, "targetname", "B" );
-	DispatchSpawn( iEntity );
-	ActivateEntity( iEntity );
-	TeleportEntity( iEntity, Float:{ 0.0, 0.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
-	SetEntPropVector( iEntity, Prop_Send, "m_vecMins", Float:{ -1.0, -1.0, -1.0 } );
-	SetEntPropVector( iEntity, Prop_Send, "m_vecMaxs", Float:{ 1.0, 1.0, 1.0 } );
-	SetEntProp( iEntity, Prop_Send, "m_fEffects", 32 );
+	
+	if( iEntity != -1 )
+	{
+		DispatchKeyValue( iEntity, "targetname", "B" );
+		DispatchSpawn( iEntity );
+		ActivateEntity( iEntity );
+		TeleportEntity( iEntity, Float:{ 0.0, 0.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
+		SetEntPropVector( iEntity, Prop_Send, "m_vecMins", Float:{ -1.0, -1.0, -1.0 } );
+		SetEntPropVector( iEntity, Prop_Send, "m_vecMaxs", Float:{ 1.0, 1.0, 1.0 } );
+		SetEntProp( iEntity, Prop_Send, "m_fEffects", 32 );
+	}
 	
 	g_bIgnoreFirstRoundStart = true;
 	

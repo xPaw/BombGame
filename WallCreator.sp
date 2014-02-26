@@ -224,6 +224,11 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 	{
 		SpawnZone(z);
 	}
+	
+	while ((z = FindEntityByClassname(z, BRUSH_ENTITY)) != -1)
+	{
+		PrintToChatAll( "m_nSolidType: %i - m_CollisionGroup: %i - m_usSolidFlags: %i", GetEntProp(z, Prop_Send, "m_nSolidType"), GetEntProp(z, Prop_Send, "m_CollisionGroup" ), GetEntProp(z, Prop_Send, "m_usSolidFlags") );
+	}
 }
 
 /**
@@ -1311,7 +1316,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 0x020;
@@ -1327,7 +1332,9 @@ public bool:OnShouldCollide(entity, collisiongroup, contentsmask, bool:originalR
 {
 	PrintToChatAll( "OnShouldCollide: entity: %i - collisiongroup: %i - originalResult: %i", entity, collisiongroup, originalResult );
 	
-	return true;
+	originalResult = true;
+	
+	return Plugin_Changed;
 }
 
 /* KillZone()

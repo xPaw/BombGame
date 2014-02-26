@@ -451,6 +451,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			new Float:vPosition[ 3 ];
 			GetClientEyePosition( iBomber, vPosition );
 			
+#if false
 			TE_SetupExplosion( vPosition, g_iExplosionSprite, 5.0, 1, 0, 100, 600, _, '-' );
 			TE_SendToAll();
 			
@@ -458,6 +459,19 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			TE_SendToAll();
 			
 			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
+#endif
+			
+			new iExplosion = CreateEntityByName( "env_explosion" );
+			
+			if( iExplosion != -1 )
+			{
+				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
+				//DispatchKeyValue( iExplosion, "iMagnitude", "100" );
+				//DispatchKeyValue( iExplosion, "iRadiusOverride", "200" );
+				DispatchKeyValue( iExplosion, "spawnflags", "48" ); // No Sparks + No Decal
+				AcceptEntityInput( iExplosion, "Explode" );
+				AcceptEntityInput( iExplosion, "Kill" );
+			}
 		}
 	}
 	
@@ -503,8 +517,6 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		iReason = CSRoundEnd_TargetBombed;
 	}
 	
-	PrintToChatAll( "Handling round end" );
-	
 	return Plugin_Changed;
 }
 
@@ -519,8 +531,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( IsFakeClient( iClient ) )
 	{
-		PrintToChatAll( "Fake client spawned: %i", iClient );
-		
 		SetEntityMoveType( iClient, MOVETYPE_NOCLIP );
 		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 		SetEntProp( iClient, Prop_Data, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Data, "m_fEffects" ) | 0x020 );

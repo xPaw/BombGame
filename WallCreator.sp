@@ -227,6 +227,12 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 	
 	while ((z = FindEntityByClassname(z, BRUSH_ENTITY)) != -1)
 	{
+		if( !IsValidEntity( z ) )
+		{
+			PrintToChatAll( "%i not valid", z );
+			continue;
+		}
+		
 		PrintToChatAll( "m_nSolidType: %i - m_CollisionGroup: %i - m_usSolidFlags: %i", GetEntProp(z, Prop_Send, "m_nSolidType"), GetEntProp(z, Prop_Send, "m_CollisionGroup" ), GetEntProp(z, Prop_Send, "m_usSolidFlags") );
 	}
 }
@@ -1334,7 +1340,7 @@ public bool:OnShouldCollide(entity, collisiongroup, contentsmask, bool:originalR
 	
 	originalResult = true;
 	
-	return Plugin_Changed;
+	return true;
 }
 
 /* KillZone()

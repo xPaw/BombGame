@@ -4,7 +4,7 @@
 #include < cstrike >
 
 #define PREFIX            " \x01\x0B\x04[Wall Creator]\x01 "
-#define ZONES_MODEL       "models/error.mdl"
+#define ZONES_MODEL       "models/props_unique/airport/line_post.mdl"
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
@@ -1281,9 +1281,6 @@ SpawnZone(zoneIndex)
 	// Move zone entity in middle of a box
 	TeleportEntity(zone, middle, NULL_VECTOR, NULL_VECTOR);
 
-	// Set the model (yea, its also required for brush model)
-	//SetEntityModel(zone, ZONES_MODEL);
-
 	// Have the m_vecMins always be negative
 	m_vecMins[0] = m_vecMins[0] - middle[0];
 	if (m_vecMins[0] > 0.0)
@@ -1310,23 +1307,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	/*SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
-
-	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
-	m_fEffects |= 0x020;
-	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);*/
-	
 	AcceptEntityInput(zone, "EnableCollision");
-	//AcceptEntityInput(zone, "TurnOn");
-	
-	SDKHook(zone, SDKHook_StartTouch, OnShouldCollide);
-}
-
-public Action:OnShouldCollide(entity, other)
-{
-	PrintToChatAll( "Touch: entity: %i - other: %i", entity, other );
-	
 }
 
 /* KillZone()

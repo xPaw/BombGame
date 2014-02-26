@@ -189,13 +189,6 @@ public Action:OnTimerCreateBot( Handle:hTimer )
 
 public OnMapEnd( )
 {
-	if( g_hTimerSound != INVALID_HANDLE )
-	{
-		CloseHandle( g_hTimerSound );
-		
-		g_hTimerSound = INVALID_HANDLE;
-	}
-	
 	ResetGame( );
 	
 	if( g_iFakeClient )
@@ -353,12 +346,14 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	if( g_hTimerSound != INVALID_HANDLE )
+	if( !g_bStarting )
 	{
-		CloseHandle( g_hTimerSound );
+		PrintToChatAll( "g_bStarting is not true, not starting bombgame..." ); // TODO
 		
-		g_hTimerSound = INVALID_HANDLE;
+		return;
 	}
+	
+	g_bStarting = false;
 	
 	new iPlayers[ MaxClients ], iAlive, i;
 	
@@ -369,15 +364,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 			iPlayers[ iAlive++ ] = i;
 		}
 	}
-	
-	if( !g_bStarting )
-	{
-		PrintToChatAll( "g_bStarting is not true, not starting bombgame..." );
-		
-		return;
-	}
-	
-	g_bStarting = false;
 	
 	if( iAlive > 1 )
 	{
@@ -410,41 +396,43 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 
 public Action:OnTimerIncreaseExposure( Handle:hTimer )
 {
-	if( g_iCurrentBomber )
+	if( !g_iCurrentBomber )
 	{
-		new iTime = ++g_iBombHeldTimer[ g_iCurrentBomber ];
+		// TODO
+		PrintToChatAll( "OnTimerIncreaseExposure fired but there is no bomber" );
+		LogError( "OnTimerIncreaseExposure fired but there is no bomber" );
 		
-		if( iTime >= EXPOSURE_TIME )
-		{
-			SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", 0 );
-			
-			CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
-		}
-		else
-		{
-			if( iTime == EXPOSURE_TIME - 1 )
-			{
-				EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
-			}
-			else if( iTime > EXPOSURE_TIME - 5 )
-			{
-				EmitSoundToAll( "player/geiger3.wav", g_iCurrentBomber );
-			}
-			else if( iTime > EXPOSURE_TIME / 2 )
-			{
-				EmitSoundToClient( g_iCurrentBomber, "player/geiger2.wav", g_iCurrentBomber );
-			}
-			else
-			{
-				EmitSoundToClient( g_iCurrentBomber, "player/geiger1.wav", g_iCurrentBomber );
-			}
-			
-			SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", RoundToFloor( 100.0 - ( 100.0 / EXPOSURE_TIME * iTime ) ) );
-		}
+		return;
+	}
+	
+	new iTime = ++g_iBombHeldTimer[ g_iCurrentBomber ];
+	
+	if( iTime >= EXPOSURE_TIME )
+	{
+		SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", 0 );
+		
+		CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
 	}
 	else
 	{
-		PrintToChatAll( "Timer is going but there is no current bomber" );
+		if( iTime == EXPOSURE_TIME - 1 )
+		{
+			EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
+		}
+		else if( iTime > EXPOSURE_TIME - 5 )
+		{
+			EmitSoundToAll( "player/geiger3.wav", g_iCurrentBomber );
+		}
+		else if( iTime > EXPOSURE_TIME / 2 )
+		{
+			EmitSoundToClient( g_iCurrentBomber, "player/geiger2.wav", g_iCurrentBomber );
+		}
+		else
+		{
+			EmitSoundToClient( g_iCurrentBomber, "player/geiger1.wav", g_iCurrentBomber );
+		}
+		
+		SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", RoundToFloor( 100.0 - ( 100.0 / EXPOSURE_TIME * iTime ) ) );
 	}
 }
 
@@ -459,30 +447,11 @@ public Action:OnRoundArmSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
-	if( g_iCurrentBomber > 0 )
-	{
-		EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
-	}
+	EmitSoundToAll( "ui/arm_bomb.wav" );
 }
 
 public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 {
-	PrintToChatAll( "CS_OnTerminateRound(%f, %i)", flDelay, iReason );
-	
-	if( !g_bGameRunning )
-	{
-		PrintToChatAll( "No game running" );
-		
-		if( iReason == CSRoundEnd_TargetSaved )
-		{
-			iReason = CSRoundEnd_TargetBombed;
-			
-			return Plugin_Changed;
-		}
-		
-		return Plugin_Continue;
-	}
-	
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerStuck );
@@ -497,6 +466,18 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		g_hTimerSound = INVALID_HANDLE;
 	}
 	
+	if( !g_bGameRunning )
+	{
+		if( iReason == CSRoundEnd_TargetSaved )
+		{
+			iReason = CSRoundEnd_TargetBombed;
+			
+			return Plugin_Changed;
+		}
+		
+		return Plugin_Continue;
+	}
+	
 	new iBomber = g_iCurrentBomber;
 	
 	g_iCurrentBomber = 0;
@@ -507,7 +488,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
 #if IS_EXPOSURE_MODE
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure!", szName );
 #else
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
 #endif
@@ -624,9 +605,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
-	
-	//SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
-	SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 }
 
 public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
@@ -636,6 +614,8 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 	if( iClient && IsPlayerAlive( iClient ) )
 	{
 		HideRadar( iClient );
+		
+		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 	}
 }
 
@@ -672,8 +652,6 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( iClient == g_iCurrentBomber )
 	{
-		//SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
-		
 		g_iCurrentBomber = 0;
 		g_iLastBomber = iClient;
 		
@@ -808,13 +786,6 @@ MakeBomber( iClient )
 
 EndRound( )
 {
-	if( g_hTimerSound != INVALID_HANDLE )
-	{
-		CloseHandle( g_hTimerSound );
-		
-		g_hTimerSound = INVALID_HANDLE;
-	}
-	
 	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
 }
 

@@ -483,7 +483,18 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			new Float:vPosition[ 3 ];
 			GetClientEyePosition( iBomber, vPosition );
 			
-			new iExplosion = CreateEntityByName( "env_explosion" );
+			new iExplosion = CreateEntityByName( "planted_c4_training" );
+			
+			if( iExplosion != -1 )
+			{
+				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
+				DispatchSpawn( iExplosion );
+				
+				SetVariantFloat( 0.0 );
+				AcceptEntityInput( iExplosion, "ActivateSetTimerLength" );
+			}
+			
+			/*new iExplosion = CreateEntityByName( "env_explosion" );
 			
 			if( iExplosion != -1 )
 			{
@@ -493,19 +504,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 				DispatchSpawn( iExplosion );
 				AcceptEntityInput( iExplosion, "Explode" );
 				AcceptEntityInput( iExplosion, "Kill" );
-			}
-			
-			iExplosion = CreateEntityByName( "env_physexplosion" );
-			
-			if( iExplosion != -1 )
-			{
-				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-				DispatchKeyValue( iExplosion, "iMagnitude", "100" );
-				DispatchKeyValue( iExplosion, "spawnflags", "3" );
-				DispatchSpawn( iExplosion );
-				AcceptEntityInput( iExplosion, "Explode" );
-				AcceptEntityInput( iExplosion, "Kill" );
-			}
+			}*/
 			
 			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 		}

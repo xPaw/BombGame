@@ -342,13 +342,23 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
 	}
+	
+	PrintToChatAll( "DEBUG: RoundStart Event" );
+	
+	for( new i = 1; i <= MaxClients; i++ )
+	{
+		if( IsClientInGame( i ) )
+		{
+			PrintToChatAll( "DEBUG: Client %i alive: %i - dead in bombgame: %i", IsPlayerAlive( i ), g_bDeadPlayers[ i ] );
+		}
+	}
 }
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	if( !g_bStarting )
 	{
-		PrintToChatAll( "g_bStarting is not true, not starting bombgame..." ); // TODO
+		PrintToChatAll( "DEBUG: g_bStarting is not true, not starting bombgame..." ); // TODO
 		
 		return;
 	}
@@ -399,7 +409,7 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	if( !g_iCurrentBomber )
 	{
 		// TODO
-		PrintToChatAll( "OnTimerIncreaseExposure fired but there is no bomber" );
+		PrintToChatAll( "DEBUG: OnTimerIncreaseExposure fired but there is no bomber" );
 		LogError( "OnTimerIncreaseExposure fired but there is no bomber" );
 		
 		return;
@@ -579,6 +589,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( !IsPlayerAlive( iClient ) )
 	{
+		PrintToChatAll( "DEBUG: Client %i spawned, but not alive" );
 		return;
 	}
 	
@@ -590,6 +601,15 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		TeleportEntity( iClient, Float:{ 0.0, 0.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
 		
 		return;
+	}
+	
+	if( g_bGameRunning )
+	{
+		PrintToChatAll( "DEBUG: Client %i spawned while game is running (sound timer exists? %i)", g_hTimerSound != INVALID_HANDLE );
+	}
+	else
+	{
+		PrintToChatAll( "DEBUG: Client %i spawned" );
 	}
 	
 	if( g_bDeadPlayers[ iClient ] )

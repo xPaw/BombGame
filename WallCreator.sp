@@ -1,4 +1,5 @@
 #include < sourcemod >
+#include < sdkhooks >
 #include < sdktools >
 #include < cstrike >
 
@@ -94,6 +95,8 @@ public OnPluginStart()
 
 	// And create/load plugin's config
 	AutoExecConfig(true, "sm_zones");
+
+	HookEvent("round_start", OnRoundStart, EventHookMode_PostNoCopy);
 
 	// Get the zones path
 	decl String:path[PLATFORM_MAX_PATH];
@@ -206,6 +209,21 @@ public Action:OnPlayerRunCmd(client, &buttons)
 
 	// Player not IN_USE
 	else PressedUse[client] = false;
+}
+
+/* OnRoundStart()
+ *
+ * Called when the round starts.
+ * -------------------------------------------------------------------------- */
+public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	new z, length = GetArraySize(ZonesArray);
+	
+	// Then re-create zones depends on array size
+	for (z = 0; z < length; z++)
+	{
+		SpawnZone(z);
+	}
 }
 
 /**
@@ -1293,7 +1311,7 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 5);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 11);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 0x020;
@@ -1301,6 +1319,15 @@ SpawnZone(zoneIndex)
 	
 	AcceptEntityInput(zone, "EnableCollision");
 	AcceptEntityInput(zone, "TurnOn");
+	
+	SDKHook(zone, SDKHook_ShouldCollide, OnShouldCollide);
+}
+
+public bool:OnShouldCollide(entity, collisiongroup, contentsmask, bool:originalResult)
+{
+	PrintToChatAll( "OnShouldCollide: entity: %i - collisiongroup: %i - originalResult: %i", entity, collisiongroup, originalResult );
+	
+	return true;
 }
 
 /* KillZone()

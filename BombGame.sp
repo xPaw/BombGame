@@ -5,6 +5,7 @@
 #include < cstrike >
 
 #define IS_EXPOSURE_MODE 1 // Do this in a cvar
+#define EXPOSURE_TIME 25
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
 
@@ -85,6 +86,9 @@ public OnConfigsExecuted( )
 {
 	ServerCommand( "exec BombGame.cfg" );
 	
+	PrecacheSound( "player/geiger1.wav" );
+	PrecacheSound( "player/geiger2.wav" );
+	PrecacheSound( "player/geiger3.wav" );
 	PrecacheSound( "buttons/blip2.wav" );
 	PrecacheSound( "ui/beep22.wav" );
 	PrecacheSound( "ui/arm_bomb.wav" );
@@ -94,6 +98,10 @@ public OnConfigsExecuted( )
 	PrecacheModel( "sprites/zerogxplode.spr" );
 	
 	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
+	
+#if IS_EXPOSURE_MODE
+	ServerCommand( "mp_roundtime 10" );
+#endif
 }
 
 public OnMapStart( )
@@ -402,22 +410,35 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 
 public Action:OnTimerIncreaseExposure( Handle:hTimer )
 {
-	#define EXPOSURE_TIME 25
-	
 	if( g_iCurrentBomber )
 	{
 		new iTime = ++g_iBombHeldTimer[ g_iCurrentBomber ];
 		
 		if( iTime >= EXPOSURE_TIME )
 		{
+			SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", 0 );
+			
 			CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
-		}
-		else if( iTime == EXPOSURE_TIME - 1 )
-		{
-			EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
 		}
 		else
 		{
+			if( iTime == EXPOSURE_TIME - 1 )
+			{
+				EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
+			}
+			else if( iTime > EXPOSURE_TIME - 5 )
+			{
+				EmitSoundToAll( "player/geiger3.wav", g_iCurrentBomber );
+			}
+			else if( iTime > EXPOSURE_TIME / 2 )
+			{
+				EmitSoundToClient( g_iCurrentBomber, "player/geiger2.wav", g_iCurrentBomber );
+			}
+			else
+			{
+				EmitSoundToClient( g_iCurrentBomber, "player/geiger1.wav", g_iCurrentBomber );
+			}
+			
 			SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", RoundToFloor( 100.0 - ( 100.0 / EXPOSURE_TIME * iTime ) ) );
 		}
 	}
@@ -462,20 +483,18 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		return Plugin_Continue;
 	}
 	
-#if IS_EXPOSURE_MODE
-	if( iReason == CSRoundEnd_TargetSaved )
-	{
-		PrintToChatAll( "Blocking CSRoundEnd_TargetSaved because we're cool like that. (delay = %f)", flDelay );
-		
-		return Plugin_Handled;
-	}
-#endif
-	
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerStuck );
 		
 		g_hTimerStuck = INVALID_HANDLE;
+	}
+	
+	if( g_hTimerSound != INVALID_HANDLE )
+	{
+		CloseHandle( g_hTimerSound );
+		
+		g_hTimerSound = INVALID_HANDLE;
 	}
 	
 	new iBomber = g_iCurrentBomber;
@@ -488,7 +507,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
 #if IS_EXPOSURE_MODE
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure (we made that up, there is no radiation)", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure", szName );
 #else
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
 #endif
@@ -533,6 +552,10 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
+#if IS_EXPOSURE_MODE
+		g_iBombHeldTimer[ i ] = 0;
+#endif
+		
 		if( IsPlayerBombGamer( i ) )
 		{
 			iAlivePlayer = i;
@@ -724,6 +747,13 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		EmitSoundToAll( "buttons/blip2.wav", iClient );
 		
 		g_iStatsBombSwitched++;
+		
+#if IS_EXPOSURE_MODE
+		if( g_iBombHeldTimer[ g_iCurrentBomber ] == EXPOSURE_TIME - 1 )
+		{
+			EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
+		}
+#endif
 	}
 	else
 	{

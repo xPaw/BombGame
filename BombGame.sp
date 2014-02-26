@@ -4,6 +4,8 @@
 #include < sdktools >
 #include < cstrike >
 
+#define IS_EXPOSURE_MODE 1 // Do this in a cvar
+
 #define HIDEHUD_RADAR  ( 1 << 12 )
 
 public Plugin:myinfo =
@@ -15,7 +17,8 @@ public Plugin:myinfo =
 	url = "http://xpaw.ru"
 };
 
-new g_bDeadPlayers[ MAXPLAYERS ] = { false, ... };
+new g_iBombHeldTimer[ MAXPLAYERS ];
+new g_bDeadPlayers[ MAXPLAYERS ];
 new g_bStarting;
 new g_bGameRunning;
 new g_iFakeClient;
@@ -328,8 +331,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	if( g_bIgnoreFirstRoundStart )
 	{
-		PrintToChatAll( "Ignoring first round start" );
-		
 		g_bIgnoreFirstRoundStart = false;
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 If you want to start the game manually, say\x02 /start\x01" );
@@ -389,10 +390,41 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
+#if IS_EXPOSURE_MODE
+		g_hTimerSound = CreateTimer( 1.0, OnTimerIncreaseExposure, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE );
+#else
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
+#endif
 	}
 	
 	g_flRoundTime = 0.0;
+}
+
+public Action:OnTimerIncreaseExposure( Handle:hTimer )
+{
+	#define EXPOSURE_TIME 25
+	
+	if( g_iCurrentBomber )
+	{
+		new iTime = ++g_iBombHeldTimer[ g_iCurrentBomber ];
+		
+		if( iTime >= EXPOSURE_TIME )
+		{
+			CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
+		}
+		else if( iTime == EXPOSURE_TIME - 1 )
+		{
+			EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
+		}
+		else
+		{
+			SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", RoundToFloor( 100.0 - ( 100.0 / EXPOSURE_TIME * iTime ) ) );
+		}
+	}
+	else
+	{
+		PrintToChatAll( "Timer is going but there is no current bomber" );
+	}
 }
 
 public Action:OnRoundSoundTimer( Handle:hTimer )
@@ -406,7 +438,10 @@ public Action:OnRoundArmSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
-	EmitSoundToAll( "ui/arm_bomb.wav" );
+	if( g_iCurrentBomber > 0 )
+	{
+		EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
+	}
 }
 
 public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
@@ -427,6 +462,15 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		return Plugin_Continue;
 	}
 	
+#if IS_EXPOSURE_MODE
+	if( iReason == CSRoundEnd_TargetSaved )
+	{
+		PrintToChatAll( "Blocking CSRoundEnd_TargetSaved because we're cool like that. (delay = %f)", flDelay );
+		
+		return Plugin_Handled;
+	}
+#endif
+	
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
 		CloseHandle( g_hTimerStuck );
@@ -443,7 +487,12 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		decl String:szName[ 32 ];
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
+#if IS_EXPOSURE_MODE
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure (we made that up, there is no radiation)", szName );
+#else
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
+#endif
+		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times, bomber switched\x04 %i\x01 times during this round.", g_iStatsBombDropped, g_iStatsBombSwitched );
 		
 		g_iLastBomber = iBomber;
@@ -685,6 +734,16 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iStatsBombDropped++;
+	
+#if IS_EXPOSURE_MODE
+	new iEntity = GetClientOfUserId( GetEventInt( hEvent, "entindex" ) );
+	
+	if( IsValidEdict( iEntity ) )
+	{
+		SetEntityRenderColor( iEntity, 241, 196, 15, 255 );
+		SetEntityRenderMode( iEntity, RENDER_TRANSCOLOR );
+	}
+#endif
 }
 
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -759,6 +818,7 @@ ResetGame( )
 	for( new i = 1; i <= MaxClients; i++ )
 	{
 		g_bDeadPlayers[ i ] = false;
+		g_iBombHeldTimer[ i ] = 0;
 	}
 	
 	g_bStarting = false;

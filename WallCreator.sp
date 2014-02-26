@@ -224,19 +224,6 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 	{
 		SpawnZone(z);
 	}
-	
-	z = -1;
-	
-	while ((z = FindEntityByClassname(z, BRUSH_ENTITY)) != -1)
-	{
-		if( !IsValidEntity( z ) )
-		{
-			PrintToChatAll( "%i not valid", z );
-			continue;
-		}
-		
-		PrintToChatAll( "m_nSolidType: %i - m_CollisionGroup: %i - m_usSolidFlags: %i", GetEntProp(z, Prop_Send, "m_nSolidType"), GetEntProp(z, Prop_Send, "m_CollisionGroup" ), GetEntProp(z, Prop_Send, "m_usSolidFlags") );
-	}
 }
 
 /**
@@ -1295,7 +1282,7 @@ SpawnZone(zoneIndex)
 	TeleportEntity(zone, middle, NULL_VECTOR, NULL_VECTOR);
 
 	// Set the model (yea, its also required for brush model)
-	SetEntityModel(zone, ZONES_MODEL);
+	//SetEntityModel(zone, ZONES_MODEL);
 
 	// Have the m_vecMins always be negative
 	m_vecMins[0] = m_vecMins[0] - middle[0];
@@ -1323,26 +1310,23 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
-	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
+	//SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	/*SetEntProp(zone, Prop_Send, "m_CollisionGroup", 0);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 0x020;
-	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
+	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);*/
 	
 	AcceptEntityInput(zone, "EnableCollision");
-	AcceptEntityInput(zone, "TurnOn");
+	//AcceptEntityInput(zone, "TurnOn");
 	
-	SDKHook(zone, SDKHook_ShouldCollide, OnShouldCollide);
+	SDKHook(zone, SDKHook_StartTouch, OnShouldCollide);
 }
 
-public bool:OnShouldCollide(entity, collisiongroup, contentsmask, bool:originalResult)
+public Action:OnShouldCollide(entity, other)
 {
-	PrintToChatAll( "OnShouldCollide: entity: %i - collisiongroup: %i - originalResult: %i", entity, collisiongroup, originalResult );
+	PrintToChatAll( "Touch: entity: %i - other: %i", entity, other );
 	
-	originalResult = true;
-	
-	return true;
 }
 
 /* KillZone()

@@ -1308,6 +1308,9 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	AcceptEntityInput(zone, "EnableCollision");
+	
+	SetEntityRenderColor(zone, 255, 127, 0, 200);
+	SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
 }
 
 /* KillZone()

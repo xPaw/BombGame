@@ -33,8 +33,6 @@ new Handle:g_hBlockedSounds;
 new g_iStatsBombDropped;
 new g_iStatsBombSwitched;
 
-new g_iExplosionSprite;
-new g_iSmokeSprite;
 new g_iPlayerModel;
 new g_iPreviousPlayerModel;
 
@@ -114,13 +112,9 @@ public OnConfigsExecuted( )
 	PrecacheSound( "items/ammo_pickup.wav" );
 	PrecacheSound( "training/countdown.wav" );
 	PrecacheSound( "weapons/hegrenade/explode3.wav" );
-	
 	PrecacheModel( "sprites/zerogxplode.spr" );
 	
 	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
-	
-	g_iExplosionSprite = PrecacheModel( "sprites/blueglow1.vmt" );
-	g_iSmokeSprite = PrecacheModel( "sprites/steam1.vmt" );
 }
 
 public OnMapStart( )
@@ -489,28 +483,20 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			new Float:vPosition[ 3 ];
 			GetClientEyePosition( iBomber, vPosition );
 			
-#if false
-			TE_SetupExplosion( vPosition, g_iExplosionSprite, 5.0, 1, 0, 100, 600, _, '-' );
-			TE_SendToAll();
-			
-			TE_SetupSmoke( vPosition, g_iSmokeSprite, 10.0, 3 );
-			TE_SendToAll();
-			
-			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
-#endif
-			
 			new iExplosion = CreateEntityByName( "env_explosion" );
 			
 			if( iExplosion != -1 )
 			{
 				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-				//DispatchKeyValue( iExplosion, "iMagnitude", "100" );
-				//DispatchKeyValue( iExplosion, "iRadiusOverride", "200" );
-				//DispatchKeyValue( iExplosion, "spawnflags", "48" ); // No Sparks + No Decal
+				DispatchKeyValue( iExplosion, "iMagnitude", "100" );
+				DispatchKeyValue( iExplosion, "iRadiusOverride", "200" );
+				DispatchKeyValue( iExplosion, "spawnflags", "128" );
 				DispatchSpawn( iExplosion );
 				AcceptEntityInput( iExplosion, "Explode" );
 				AcceptEntityInput( iExplosion, "Kill" );
 			}
+			
+			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 		}
 	}
 	

@@ -59,7 +59,6 @@ public OnPluginStart( )
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
 	RegConsoleCmd( "sm_start", OnCommandStart, "Start the game" );
-	RegConsoleCmd( "sm_test", OnCommandTest, "Start the game" );
 	
 	HookEvent( "round_start",      OnRoundStart );
 	HookEvent( "round_freeze_end", OnRoundFreezeEnd );
@@ -69,29 +68,6 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
-	
-	//ServerCommand( "mp_restartgame 1" );
-}
-
-public Action:OnCommandTest( iClient, iArguments )
-{
-	new Float:vPosition[ 3 ];
-	GetClientEyePosition( iClient, vPosition );
-	
-	new iExplosion = CreateEntityByName( "planted_c4_training" );
-	
-	if( iExplosion != -1 )
-	{
-		DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-		DispatchSpawn( iExplosion );
-		
-		SetVariantFloat( 10.0 );
-		AcceptEntityInput( iExplosion, "ActivateSetTimerLength" );
-	}
-	
-	ReplyToCommand( iClient, "OK." );
-	
-	return Plugin_Handled;
 }
 
 public OnPluginEnd( )
@@ -430,28 +406,7 @@ public Action:OnRoundArmSoundTimer( Handle:hTimer )
 {
 	g_hTimerSound = INVALID_HANDLE;
 	
-	//EmitSoundToAll( "ui/arm_bomb.wav" );
-	
-	if( !g_iCurrentBomber || !IsPlayerAlive( g_iCurrentBomber ) )
-	{
-		return;
-	}
-	
-	new Float:vPosition[ 3 ];
-	GetClientEyePosition( g_iCurrentBomber, vPosition );
-	
-	new iExplosion = CreateEntityByName( "planted_c4_training" );
-	
-	if( iExplosion != -1 )
-	{
-		DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-		DispatchSpawn( iExplosion );
-		
-		SetEntityMoveType( iExplosion, MOVETYPE_FLYGRAVITY );
-		
-		SetVariantFloat( 1.0 );
-		AcceptEntityInput( iExplosion, "ActivateSetTimerLength" );
-	}
+	EmitSoundToAll( "ui/arm_bomb.wav" );
 }
 
 public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
@@ -501,7 +456,12 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			
 			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
 			
-			/*new iExplosion = CreateEntityByName( "env_explosion" );
+			new Float:vPosition[ 3 ];
+			GetClientEyePosition( iBomber, vPosition );
+			
+			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
+			
+			new iExplosion = CreateEntityByName( "env_explosion" );
 			
 			if( iExplosion != -1 )
 			{
@@ -511,9 +471,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 				DispatchSpawn( iExplosion );
 				AcceptEntityInput( iExplosion, "Explode" );
 				AcceptEntityInput( iExplosion, "Kill" );
-			}*/
-			
-			//EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
+			}
 		}
 	}
 	

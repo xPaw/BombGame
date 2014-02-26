@@ -225,6 +225,8 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 		SpawnZone(z);
 	}
 	
+	z = -1;
+	
 	while ((z = FindEntityByClassname(z, BRUSH_ENTITY)) != -1)
 	{
 		if( !IsValidEntity( z ) )

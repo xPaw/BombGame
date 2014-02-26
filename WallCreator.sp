@@ -7,7 +7,7 @@
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
-#define BRUSH_ENTITY      "func_brush"
+#define BRUSH_ENTITY      "prop_dynamic_override"
 
 enum // Just makes plugin readable
 {
@@ -1248,7 +1248,7 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "Solidity", "2");
+	DispatchKeyValue(zone, "Solid", "2");
 	
 	// Spawn an entity
 	DispatchSpawn(zone);
@@ -1292,10 +1292,14 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_CollisionGroup", 5);
 
 	new m_fEffects = GetEntProp(zone, Prop_Send, "m_fEffects");
 	m_fEffects |= 0x020;
 	SetEntProp(zone, Prop_Send, "m_fEffects", m_fEffects);
+	
+	AcceptEntityInput(zone, "EnableCollision");
+	AcceptEntityInput(zone, "TurnOn");
 }
 
 /* KillZone()

@@ -72,6 +72,19 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
+	
+	HookUserMessage( GetUserMessageId( "KillCam" ), OnUserMessageKillCam, true );
+	HookUserMessage( GetUserMessageId( "SendLastKillerDamageToClient" ), OnUserMessageSendLastKillerDamageToClient, true );
+}
+
+public Action:OnUserMessageKillCam( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
+{
+	PrintToChatAll( "OnUserMessageKillCam (players: %i)", playersNum );
+}
+
+public Action:OnUserMessageSendLastKillerDamageToClient( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
+{
+	PrintToChatAll( "OnUserMessageSendLastKillerDamageToClient (players: %i)", playersNum );
 }
 
 public OnPluginEnd( )

@@ -75,42 +75,12 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
-	HookUserMessage( GetUserMessageId( "VoteSetup" ), OnUserMessageVoteSetup, true );
 	HookUserMessage( GetUserMessageId( "KillCam" ), OnUserMessageKillCam, true );
-	HookUserMessage( GetUserMessageId( "SendLastKillerDamageToClient" ), OnUserMessageSendLastKillerDamageToClient, true );
-}
-
-public Action:OnUserMessageVoteSetup( UserMsg:iMessageID, Handle:hProtobuf, const iPlayers[ ], iPlayersNum, bool:bReliable, bool:bInit )
-{
-	new bool:bChanged, String:szPotentialIssue[ 16 ], iIssueCount = PbGetRepeatedFieldCount( hProtobuf, "potential_issues" );
-	
-	LogMessage( "DEBUG: OnUserMessageVoteSetup (players: %i), issues count: %i", iPlayersNum, iIssueCount );
-	
-	for( new i = 0; i < iIssueCount; i++ )
-	{
-		PbReadString( hProtobuf, "potential_issues", szPotentialIssue, sizeof( szPotentialIssue ), i );
-		
-		LogMessage( "DEBUG: Vote issue: %s", szPotentialIssue );
-		
-		if( StrEqual( szPotentialIssue, "ScrambleTeams" ) || StrEqual( szPotentialIssue, "SwapTeams" ) )
-		{
-			PbSetString( hProtobuf, "potential_issues", "", i );
-			
-			bChanged = true;
-		}
-	}
-	
-	return bChanged ? Plugin_Changed : Plugin_Continue;
 }
 
 public Action:OnUserMessageKillCam( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
 {
-	LogMessage( "DEBUG: OnUserMessageKillCam (players: %i), obs_mode: %i", playersNum, PbReadInt( bf, "obs_mode" ) );
-}
-
-public Action:OnUserMessageSendLastKillerDamageToClient( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
-{
-	LogMessage( "DEBUG: OnUserMessageSendLastKillerDamageToClient (players: %i)", playersNum );
+	return Plugin_Handled;
 }
 
 public OnPluginEnd( )
@@ -275,9 +245,14 @@ public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments 
 	decl String:szIssue[ 16 ];
 	GetCmdArg( 1, szIssue, sizeof( szIssue ) );
 	
-	PrintToChatAll( "DEBUG: OnCommandCallVote \"%s\", issue: \"%s\", iArguments: %i", szCommand, szIssue, iArguments );
+	if( StrEqual( szIssue, "ScrambleTeams", false ) || StrEqual( szIssue, "SwapTeams", false ) )
+	{
+		PrintToChatAll( iClient, " \x01\x0B\x04[BombGame]\x02 Scramble and switch teams votes are disabled." );
+		
+		return Plugin_Handled;
+	}
 	
-	return StrEqual( szIssue, "ScrambleTeams", false ) || StrEqual( szIssue, "SwapTeams", false ) ? Plugin_Handled : Plugin_Continue;
+	return Plugin_Continue;
 }
 
 public Action:OnCommandHelp( iClient, iArguments )
@@ -391,16 +366,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
 	}
-	
-	PrintToChatAll( "DEBUG: RoundStart Event" );
-	
-	for( new i = 1; i <= MaxClients; i++ )
-	{
-		if( IsClientInGame( i ) )
-		{
-			PrintToChatAll( "DEBUG: Client %i alive: %i - dead in bombgame: %i", i, IsPlayerAlive( i ), g_bDeadPlayers[ i ] );
-		}
-	}
 }
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -513,14 +478,14 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 {
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
-		CloseHandle( g_hTimerStuck );
+		KillTimer( g_hTimerStuck );
 		
 		g_hTimerStuck = INVALID_HANDLE;
 	}
 	
 	if( g_hTimerSound != INVALID_HANDLE )
 	{
-		CloseHandle( g_hTimerSound );
+		KillTimer( g_hTimerSound );
 		
 		g_hTimerSound = INVALID_HANDLE;
 	}
@@ -765,7 +730,7 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
-		CloseHandle( g_hTimerStuck );
+		KillTimer( g_hTimerStuck );
 		
 		g_hTimerStuck = INVALID_HANDLE;
 	}

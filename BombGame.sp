@@ -138,16 +138,6 @@ public OnMapStart( )
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
-	// Edit info_map_parameters
-	iEntity = FindEntityByClassname( iEntity, "info_map_parameters" );
-	
-	if( iEntity != -1 )
-	{
-		DispatchKeyValue( iEntity, "buying", "0" );
-		DispatchKeyValue( iEntity, "petpopulation", "50" );
-		DispatchSpawn( iEntity );
-	}
-	
 	// Create fake bomb spot
 	iEntity = CreateEntityByName( "func_bomb_target" );
 	
@@ -389,15 +379,24 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	// Chickens!
 	new iEntity = FindEntityByClassname( -1, "info_map_parameters" );
 	
+	if( iEntity == -1 )
+	{
+		iEntity = CreateEntityByName( "info_map_parameters" );
+	}
+	else
+	{
+		PrintToChatAll( "DEBUG: Found info_map_parameters on the map!!" );
+	}
+	
 	if( iEntity != -1 )
 	{
-		PrintToChatAll( "DEBUG: Editing info_map_parameters for chickens! %i %i", iEntity, EntIndexToEntRef( iEntity ) );
-		
-		iEntity = EntIndexToEntRef( iEntity );
+		//iEntity = EntIndexToEntRef( iEntity );
 		
 		DispatchKeyValue( iEntity, "buying", "0" );
 		DispatchKeyValue( iEntity, "petpopulation", "50" );
 		DispatchSpawn( iEntity );
+		
+		PrintToChatAll( "DEBUG: OKAY" );
 	}
 }
 

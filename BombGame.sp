@@ -33,6 +33,7 @@ new Float:g_flRoundTime;
 new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
 new Handle:g_hBlockedSounds;
+new Handle:g_hCvarGraceJoinTime;
 
 new g_iStatsBombDropped;
 new g_iStatsBombSwitched;
@@ -77,6 +78,8 @@ public OnPluginStart( )
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
+	
+	g_hCvarGraceJoinTime = FindConVar( "mp_join_grace_time" );
 }
 
 public OnPluginEnd( )
@@ -173,6 +176,9 @@ public OnMapStart( )
 	}
 	
 	CreateTimer( 1.0, OnTimerCreateBot, _, TIMER_FLAG_NO_MAPCHANGE );
+	
+	SetConVarBounds( g_hCvarGraceJoinTime, ConVarBound_Upper, true, 1000.0 );
+	SetConVarFloat( g_hCvarGraceJoinTime, 1000.0 );
 }
 
 public Action:OnTimerCreateBot( Handle:hTimer )
@@ -253,9 +259,18 @@ public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments 
 
 public Action:OnCommandJoinClass( iClient, const String:szCommand[ ], iArguments )
 {
-	if( iClient > 0 && !g_bGameRunning && !g_bStarting && !IsPlayerAlive( iClient ) )
+	if( iClient > 0 )
 	{
-		CreateTimer( 0.1, OnTimerRespawn, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
+		if( g_bGameRunning || g_bStarting )
+		{
+			PrintToChatAll( "DEBUG: %i joined team, but we forced them to be dead because game is in progress!!" );
+			
+			g_bDeadPlayers[ iClient ] = true;
+		}
+		else
+		{
+			//CreateTimer( 0.1, OnTimerRespawn, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
+		}
 	}
 }
 
@@ -382,6 +397,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	}
 	
 	g_bStarting = false;
+	
+	SetConVarFloat( g_hCvarGraceJoinTime, 0.0 ); // We don't want to allow late joins
 	
 	new iPlayers[ MaxClients ], iAlive, i;
 	
@@ -664,8 +681,6 @@ public Action:OnTimerRespawn( Handle:hTimer, any:iSerial )
 	if( iClient && !g_bGameRunning && IsClientInGame( iClient ) && !IsPlayerAlive( iClient ) )
 	{
 		CS_RespawnPlayer( iClient );
-		
-		PrintToChatAll( "DEBUG: %i late joined, respawning!", iClient );
 	}
 }
 

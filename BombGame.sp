@@ -255,9 +255,7 @@ public Action:OnCommandJoinClass( iClient, const String:szCommand[ ], iArguments
 {
 	if( iClient > 0 && !g_bGameRunning && !g_bStarting && !IsPlayerAlive( iClient ) )
 	{
-		PrintToChatAll( "DEBUG: %i late joined, respawning!", iClient );
-		
-		CS_RespawnPlayer( iClient );
+		CreateTimer( 0.1, OnTimerRespawn, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 	}
 }
 
@@ -656,6 +654,18 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 		HideRadar( iClient );
 		
 		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
+	}
+}
+
+public Action:OnTimerRespawn( Handle:hTimer, any:iSerial )
+{
+	new iClient = GetClientFromSerial( iSerial );
+	
+	if( iClient && !g_bGameRunning && IsClientInGame( iClient ) && !IsPlayerAlive( iClient ) )
+	{
+		CS_RespawnPlayer( iClient );
+		
+		PrintToChatAll( "DEBUG: %i late joined, respawning!", iClient );
 	}
 }
 

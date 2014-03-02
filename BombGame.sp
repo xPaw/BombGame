@@ -387,11 +387,13 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	}
 	
 	// Chickens!
-	new iEntity = FindEntityByClassname( iEntity, "info_map_parameters" );
+	new iEntity = FindEntityByClassname( -1, "info_map_parameters" );
 	
 	if( iEntity != -1 )
 	{
-		PrintToChatAll( "DEBUG: Editing info_map_parameters for chickens!" );
+		PrintToChatAll( "DEBUG: Editing info_map_parameters for chickens! %i", iEntity, EntIndexToEntRef( iEntity ) );
+		
+		iEntity = EntIndexToEntRef( iEntity );
 		
 		DispatchKeyValue( iEntity, "buying", "0" );
 		DispatchKeyValue( iEntity, "petpopulation", "50" );

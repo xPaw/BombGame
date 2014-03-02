@@ -138,6 +138,16 @@ public OnMapStart( )
 		AcceptEntityInput( iEntity, "kill" );
 	}
 	
+	// Edit info_map_parameters
+	iEntity = FindEntityByClassname( iEntity, "info_map_parameters" );
+	
+	if( iEntity != -1 )
+	{
+		DispatchKeyValue( iEntity, "buying", "0" );
+		DispatchKeyValue( iEntity, "petpopulation", "0" );
+		DispatchSpawn( iEntity );
+	}
+	
 	// Create fake bomb spot
 	iEntity = CreateEntityByName( "func_bomb_target" );
 	
@@ -375,29 +385,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
 	}
-	
-	// Chickens!
-	new iEntity = FindEntityByClassname( -1, "info_map_parameters" );
-	
-	if( iEntity == -1 )
-	{
-		iEntity = CreateEntityByName( "info_map_parameters" );
-	}
-	else
-	{
-		PrintToChatAll( "DEBUG: Found info_map_parameters on the map!!" );
-	}
-	
-	if( iEntity != -1 )
-	{
-		//iEntity = EntIndexToEntRef( iEntity );
-		
-		DispatchKeyValue( iEntity, "buying", "0" );
-		DispatchKeyValue( iEntity, "petpopulation", "50" );
-		DispatchSpawn( iEntity );
-		
-		PrintToChatAll( "DEBUG: OKAY" );
-	}
 }
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -447,6 +434,21 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 #else
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 #endif
+		
+		// Sshhh!
+		new iEntity = CreateEntityByName( "pet_entity" );
+		
+		if( iEntity != -1 )
+		{
+			new Float:vPosition[ 3 ];
+			GetClientEyePosition( g_iCurrentBomber, vPosition );
+			
+			vPosition[ 2 ] -= 36.0;
+			
+			DispatchSpawn( iEntity );
+			ActivateEntity( iEntity );
+			TeleportEntity( iEntity, vPosition, NULL_VECTOR, NULL_VECTOR );
+		}
 	}
 	
 	g_flRoundTime = 0.0;

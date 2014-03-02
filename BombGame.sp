@@ -105,8 +105,6 @@ public OnConfigsExecuted( )
 	PrecacheSound( "weapons/hegrenade/explode3.wav" );
 	PrecacheModel( "sprites/zerogxplode.spr" );
 	
-	PrecacheModel( "models/chicken/chicken.mdl" );
-	
 	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
 	
 #if IS_EXPOSURE_MODE
@@ -436,25 +434,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 #else
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 #endif
-		
-		// Sshhh!
-		new iEntity = CreateEntityByName( "pet_entity" );
-		
-		if( iEntity != -1 )
-		{
-			PrintToChatAll( "DEBUG: Creating chicken!" );
-			
-			new Float:vPosition[ 3 ];
-			GetClientAbsOrigin( g_iCurrentBomber, vPosition );
-			
-			vPosition[ 0 ] += 36.0;
-			vPosition[ 1 ] += 36.0;
-			
-			DispatchKeyValue( iEntity, "model", "models/chicken/chicken.mdl" );
-			DispatchKeyValueVector( iEntity, "Origin", vPosition );
-			DispatchSpawn( iEntity );
-			ActivateEntity( iEntity );
-		}
 	}
 	
 	g_flRoundTime = 0.0;

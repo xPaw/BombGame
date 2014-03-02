@@ -105,6 +105,8 @@ public OnConfigsExecuted( )
 	PrecacheSound( "weapons/hegrenade/explode3.wav" );
 	PrecacheModel( "sprites/zerogxplode.spr" );
 	
+	PrecacheModel( "models/chicken/chicken.mdl" );
+	
 	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
 	
 #if IS_EXPOSURE_MODE
@@ -263,7 +265,7 @@ public Action:OnCommandJoinClass( iClient, const String:szCommand[ ], iArguments
 	{
 		if( g_bGameRunning || g_bStarting )
 		{
-			PrintToChatAll( "DEBUG: %i joined team, but we forced them to be dead because game is in progress!!" );
+			PrintToChatAll( "DEBUG: %i joined team, but we forced them to be dead because game is in progress!!", iClient );
 			
 			g_bDeadPlayers[ iClient ] = true;
 		}
@@ -440,14 +442,18 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		if( iEntity != -1 )
 		{
+			PrintToChatAll( "DEBUG: Creating chicken!" );
+			
 			new Float:vPosition[ 3 ];
-			GetClientEyePosition( g_iCurrentBomber, vPosition );
+			GetClientAbsOrigin( g_iCurrentBomber, vPosition );
 			
-			vPosition[ 2 ] -= 36.0;
+			vPosition[ 0 ] += 36.0;
+			vPosition[ 1 ] += 36.0;
 			
+			DispatchKeyValue( iEntity, "model", "models/chicken/chicken.mdl" );
+			DispatchKeyValueVector( iEntity, "Origin", vPosition );
 			DispatchSpawn( iEntity );
 			ActivateEntity( iEntity );
-			TeleportEntity( iEntity, vPosition, NULL_VECTOR, NULL_VECTOR );
 		}
 	}
 	
@@ -566,7 +572,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			SetEntProp( iBomber, Prop_Data, "m_iFrags", 0 );
 			
 			new Float:vPosition[ 3 ];
-			GetClientEyePosition( iBomber, vPosition );
+			GetClientAbsOrigin( iBomber, vPosition );
 			
 			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 			

@@ -810,7 +810,11 @@ public OnRestartGameCvar( Handle:hCvar, const String:szOldValue[ ], const String
 	{
 		ResetGame( );
 		
-		CS_OnTerminateRound( 10.0, CSRoundEnd_GameStart ); // Massive hacks
+		// Massive hacks all the way across the sky
+		new Float:flDelay = 10.0;
+		new CSRoundEndReason:iReason = CSRoundEnd_GameStart;
+		
+		CS_OnTerminateRound( flDelay, iReason );
 	}
 }
 

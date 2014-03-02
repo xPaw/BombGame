@@ -60,6 +60,8 @@ public OnPluginStart( )
 	
 	AddNormalSoundHook( OnNormalSound );
 	
+	AddCommandListener( OnCommandCallVote, "callvote" );
+	
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
 	RegConsoleCmd( "sm_start", OnCommandStart, "Start the game" );
@@ -73,18 +75,33 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
+	HookUserMessage( GetUserMessageId( "VoteSetup" ), OnUserMessageVoteSetup, true );
 	HookUserMessage( GetUserMessageId( "KillCam" ), OnUserMessageKillCam, true );
 	HookUserMessage( GetUserMessageId( "SendLastKillerDamageToClient" ), OnUserMessageSendLastKillerDamageToClient, true );
 }
 
+public Action:OnUserMessageVoteSetup( UserMsg:iMessageID, Handle:hProtobuf, const iPlayers[ ], iPlayersNum, bool:bReliable, bool:bInit )
+{
+	new String:szPotentialIssue[ 16 ], iIssueCount = PbGetRepeatedFieldCount( hProtobuf, "potential_issues" );
+	
+	PrintToChatAll( "DEBUG: OnUserMessageVoteSetup (players: %i), issues count: %i", iPlayersNum, iIssueCount );
+	
+	for( new i = 0; i < iIssueCount; i++ )
+	{
+		PbReadString( hProtobuf, "potential_issues", szPotentialIssue, sizeof( szPotentialIssue ), i );
+		
+		PrintToChatAll( "DEBUG: Vote issue: %s", szPotentialIssue );
+	}
+}
+
 public Action:OnUserMessageKillCam( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
 {
-	PrintToChatAll( "OnUserMessageKillCam (players: %i)", playersNum );
+	PrintToChatAll( "DEBUG: OnUserMessageKillCam (players: %i), obs_mode: %i", playersNum, PbReadInt( bf, "obs_mode" ) );
 }
 
 public Action:OnUserMessageSendLastKillerDamageToClient( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
 {
-	PrintToChatAll( "OnUserMessageSendLastKillerDamageToClient (players: %i)", playersNum );
+	PrintToChatAll( "DEBUG: OnUserMessageSendLastKillerDamageToClient (players: %i)", playersNum );
 }
 
 public OnPluginEnd( )
@@ -238,10 +255,20 @@ public OnClientDisconnect( iClient )
 
 public OnClientPutInServer( iClient )
 {
-	if( g_bGameRunning )
+	if( g_bGameRunning || g_bStarting )
 	{
 		g_bDeadPlayers[ iClient ] = true;
 	}
+}
+
+public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments )
+{
+	decl String:szIssue[ 16 ];
+	GetCmdArg( 1, szIssue, sizeof( szIssue ) );
+	
+	PrintToChatAll( "DEBUG: OnCommandCallVote \"%s\", issue: \"%s\", iArguments: %i", szCommand, szIssue, iArguments );
+	
+	return StrEqual( szIssue, "ScrambleTeams", false ) || StrEqual( szIssue, "SwapTeams", false ) ? Plugin_Handled : Plugin_Continue;
 }
 
 public Action:OnCommandHelp( iClient, iArguments )

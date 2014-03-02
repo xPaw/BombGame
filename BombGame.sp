@@ -84,13 +84,13 @@ public Action:OnUserMessageVoteSetup( UserMsg:iMessageID, Handle:hProtobuf, cons
 {
 	new bool:bChanged, String:szPotentialIssue[ 16 ], iIssueCount = PbGetRepeatedFieldCount( hProtobuf, "potential_issues" );
 	
-	PrintToChatAll( "DEBUG: OnUserMessageVoteSetup (players: %i), issues count: %i", iPlayersNum, iIssueCount );
+	LogMessage( "DEBUG: OnUserMessageVoteSetup (players: %i), issues count: %i", iPlayersNum, iIssueCount );
 	
 	for( new i = 0; i < iIssueCount; i++ )
 	{
 		PbReadString( hProtobuf, "potential_issues", szPotentialIssue, sizeof( szPotentialIssue ), i );
 		
-		PrintToChatAll( "DEBUG: Vote issue: %s", szPotentialIssue );
+		LogMessage( "DEBUG: Vote issue: %s", szPotentialIssue );
 		
 		if( StrEqual( szPotentialIssue, "ScrambleTeams" ) || StrEqual( szPotentialIssue, "SwapTeams" ) )
 		{
@@ -105,12 +105,12 @@ public Action:OnUserMessageVoteSetup( UserMsg:iMessageID, Handle:hProtobuf, cons
 
 public Action:OnUserMessageKillCam( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
 {
-	PrintToChatAll( "DEBUG: OnUserMessageKillCam (players: %i), obs_mode: %i", playersNum, PbReadInt( bf, "obs_mode" ) );
+	LogMessage( "DEBUG: OnUserMessageKillCam (players: %i), obs_mode: %i", playersNum, PbReadInt( bf, "obs_mode" ) );
 }
 
 public Action:OnUserMessageSendLastKillerDamageToClient( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
 {
-	PrintToChatAll( "DEBUG: OnUserMessageSendLastKillerDamageToClient (players: %i)", playersNum );
+	LogMessage( "DEBUG: OnUserMessageSendLastKillerDamageToClient (players: %i)", playersNum );
 }
 
 public OnPluginEnd( )
@@ -398,7 +398,7 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	{
 		if( IsClientInGame( i ) )
 		{
-			PrintToChatAll( "DEBUG: Client %i alive: %i - dead in bombgame: %i", IsPlayerAlive( i ), g_bDeadPlayers[ i ] );
+			PrintToChatAll( "DEBUG: Client %i alive: %i - dead in bombgame: %i", iClient, IsPlayerAlive( i ), g_bDeadPlayers[ i ] );
 		}
 	}
 }
@@ -638,7 +638,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( !IsPlayerAlive( iClient ) )
 	{
-		PrintToChatAll( "DEBUG: Client %i spawned, but not alive" );
+		PrintToChatAll( "DEBUG: Client %i spawned, but not alive", iClient );
 		return;
 	}
 	
@@ -654,11 +654,11 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bGameRunning )
 	{
-		PrintToChatAll( "DEBUG: Client %i spawned while game is running (sound timer exists? %i)", g_hTimerSound != INVALID_HANDLE );
+		PrintToChatAll( "DEBUG: Client %i spawned while game is running (sound timer exists? %i)", iClient, g_hTimerSound != INVALID_HANDLE );
 	}
 	else
 	{
-		PrintToChatAll( "DEBUG: Client %i spawned" );
+		PrintToChatAll( "DEBUG: Client %i spawned", iClient );
 	}
 	
 	if( g_bDeadPlayers[ iClient ] )

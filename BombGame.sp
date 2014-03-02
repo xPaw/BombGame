@@ -75,12 +75,7 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	
-	HookUserMessage( GetUserMessageId( "KillCam" ), OnUserMessageKillCam, true );
-}
-
-public Action:OnUserMessageKillCam( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )
-{
-	return Plugin_Handled;
+	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 }
 
 public OnPluginEnd( )
@@ -807,6 +802,16 @@ public Action:OnNormalSound( clients[ 64 ], &numClients, String:sample[ PLATFORM
 	new dummy;
 	
 	return GetTrieValue( g_hBlockedSounds, sample, dummy ) ? Plugin_Handled : Plugin_Continue;
+}
+
+public OnRestartGameCvar( Handle:hCvar, const String:szOldValue[ ], const String:szNewValue[ ] )
+{
+	if( StringToInt( szNewValue ) != 0 )
+	{
+		ResetGame( );
+		
+		CS_OnTerminateRound( 10.0, CSRoundEnd_GameStart ); // Massive hacks
+	}
 }
 
 MakeBomber( iClient )

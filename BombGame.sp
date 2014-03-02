@@ -247,7 +247,7 @@ public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments 
 	
 	if( StrEqual( szIssue, "ScrambleTeams", false ) || StrEqual( szIssue, "SwapTeams", false ) )
 	{
-		PrintToChatAll( iClient, " \x01\x0B\x04[BombGame]\x02 Scramble and switch teams votes are disabled." );
+		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x02 Scramble and switch teams votes are disabled." );
 		
 		return Plugin_Handled;
 	}

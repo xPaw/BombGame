@@ -398,7 +398,7 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	{
 		if( IsClientInGame( i ) )
 		{
-			PrintToChatAll( "DEBUG: Client %i alive: %i - dead in bombgame: %i", iClient, IsPlayerAlive( i ), g_bDeadPlayers[ i ] );
+			PrintToChatAll( "DEBUG: Client %i alive: %i - dead in bombgame: %i", i, IsPlayerAlive( i ), g_bDeadPlayers[ i ] );
 		}
 	}
 }

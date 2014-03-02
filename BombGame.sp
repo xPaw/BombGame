@@ -82,7 +82,7 @@ public OnPluginStart( )
 
 public Action:OnUserMessageVoteSetup( UserMsg:iMessageID, Handle:hProtobuf, const iPlayers[ ], iPlayersNum, bool:bReliable, bool:bInit )
 {
-	new String:szPotentialIssue[ 16 ], iIssueCount = PbGetRepeatedFieldCount( hProtobuf, "potential_issues" );
+	new bool:bChanged, String:szPotentialIssue[ 16 ], iIssueCount = PbGetRepeatedFieldCount( hProtobuf, "potential_issues" );
 	
 	PrintToChatAll( "DEBUG: OnUserMessageVoteSetup (players: %i), issues count: %i", iPlayersNum, iIssueCount );
 	
@@ -91,7 +91,16 @@ public Action:OnUserMessageVoteSetup( UserMsg:iMessageID, Handle:hProtobuf, cons
 		PbReadString( hProtobuf, "potential_issues", szPotentialIssue, sizeof( szPotentialIssue ), i );
 		
 		PrintToChatAll( "DEBUG: Vote issue: %s", szPotentialIssue );
+		
+		if( StrEqual( szPotentialIssue, "ScrambleTeams" ) || StrEqual( szPotentialIssue, "SwapTeams" ) )
+		{
+			PbSetString( hProtobuf, "potential_issues", "", i );
+			
+			bChanged = true;
+		}
 	}
+	
+	return bChanged ? Plugin_Changed : Plugin_Continue;
 }
 
 public Action:OnUserMessageKillCam( UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init )

@@ -385,6 +385,18 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
 	}
+	
+	// Chickens!
+	new iEntity = FindEntityByClassname( iEntity, "info_map_parameters" );
+	
+	if( iEntity != -1 )
+	{
+		PrintToChatAll( "DEBUG: Editing info_map_parameters for chickens!" );
+		
+		DispatchKeyValue( iEntity, "buying", "0" );
+		DispatchKeyValue( iEntity, "petpopulation", "50" );
+		DispatchSpawn( iEntity );
+	}
 }
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

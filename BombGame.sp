@@ -61,6 +61,7 @@ public OnPluginStart( )
 	AddNormalSoundHook( OnNormalSound );
 	
 	AddCommandListener( OnCommandCallVote, "callvote" );
+	AddCommandListener( OnCommandJoinClass, "joinclass" );
 	
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
@@ -248,6 +249,16 @@ public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments 
 	}
 	
 	return Plugin_Continue;
+}
+
+public Action:OnCommandJoinClass( iClient, const String:szCommand[ ], iArguments )
+{
+	if( iClient > 0 && !g_bGameRunning && !g_bStarting && !IsPlayerAlive( iClient ) )
+	{
+		PrintToChatAll( "DEBUG: %i late joined, respawning!", iClient );
+		
+		CS_RespawnPlayer( iClient );
+	}
 }
 
 public Action:OnCommandHelp( iClient, iArguments )

@@ -263,18 +263,11 @@ public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments 
 
 public Action:OnCommandJoinClass( iClient, const String:szCommand[ ], iArguments )
 {
-	if( iClient > 0 )
+	if( iClient > 0 && ( g_bGameRunning || g_bStarting ) )
 	{
-		if( g_bGameRunning || g_bStarting )
-		{
-			PrintToChatAll( "DEBUG: %i joined team, but we forced them to be dead because game is in progress!!", iClient );
-			
-			g_bDeadPlayers[ iClient ] = true;
-		}
-		else
-		{
-			//CreateTimer( 0.1, OnTimerRespawn, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
-		}
+		PrintToChatAll( "DEBUG: %i joined team, but we forced them to be dead because game is in progress!!", iClient );
+		
+		g_bDeadPlayers[ iClient ] = true;
 	}
 }
 
@@ -677,16 +670,6 @@ public Action:OnTimerHideRadar( Handle:hTimer, any:iSerial )
 		HideRadar( iClient );
 		
 		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
-	}
-}
-
-public Action:OnTimerRespawn( Handle:hTimer, any:iSerial )
-{
-	new iClient = GetClientFromSerial( iSerial );
-	
-	if( iClient && !g_bGameRunning && IsClientInGame( iClient ) && !IsPlayerAlive( iClient ) )
-	{
-		CS_RespawnPlayer( iClient );
 	}
 }
 

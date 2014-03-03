@@ -78,35 +78,12 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
-	HookEvent( "cs_win_panel_round", OnWinPanelRound, EventHookMode_Pre );
 	
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 	
 	g_hCvarGraceJoinTime = FindConVar( "mp_join_grace_time" );
 	
 	SetConVarBounds( g_hCvarGraceJoinTime, ConVarBound_Upper, true, MAX_GRACE_JOIN_TIME );
-}
-
-public OnWinPanelRound( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	decl String:szName[ 32 ];
-	GetEventString( hEvent, "funfact_token", szName, sizeof( szName ) );
-	
-	PrintToChatAll( "DEBUG: funfact_token: %s, funfact_player: %i, funfact_data1: %i, funfact_data2: %i, funfact_data3: %i",
-		szName,
-		GetEventInt( hEvent, "funfact_player" ),
-		GetEventInt( hEvent, "funfact_data1" ),
-		GetEventInt( hEvent, "funfact_data2" ),
-		GetEventInt( hEvent, "funfact_data3" )
-	);
-	
-	SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
-	SetEventInt( hEvent, "funfact_player", 0 );
-	SetEventInt( hEvent, "funfact_data1", 0 );
-	SetEventInt( hEvent, "funfact_data2", 0 );
-	SetEventInt( hEvent, "funfact_data3", 0 );
-	
-	return Plugin_Changed;
 }
 
 public OnPluginEnd( )

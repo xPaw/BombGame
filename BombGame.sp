@@ -78,7 +78,6 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
-	HookEvent( "begin_new_match",  OnBeginNewMatch, EventHookMode_Pre );
 	
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 	
@@ -352,13 +351,6 @@ public Action:OnTimerGiveBomb( Handle:hTimer, any:iSerial )
 	}
 }
 
-public Action:OnBeginNewMatch( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
-{
-	PrintToChatAll( "DEBUG: begin_new_match event!" );
-	
-	return Plugin_Continue;
-}
-
 public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	return Plugin_Handled;
@@ -463,18 +455,11 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 #endif
 		
-		// TODO: test
-		if( iAlive == 2 )
+		if( iAlive == 2 && iDead > 0 )
 		{
 			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
 			FireEvent( hAnnounce );
 		}
-		
-		// TODO: test
-		new Handle:hBonus = CreateEvent( "dm_bonus_weapon_start" );
-		SetEventInt( hBonus, "time", 10 );
-		SetEventInt( hBonus, "wepID", _:CSWeapon_C4 );
-		FireEvent( hBonus );
 	}
 	else if( iDead > 0 )
 	{

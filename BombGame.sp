@@ -100,7 +100,7 @@ public OnWinPanelRound( Handle:hEvent, const String:szActionName[], bool:bDontBr
 		GetEventInt( hEvent, "funfact_data3" )
 	);
 	
-	SetEventString( hEvent, "funfact_token", "This is a fun fact!" );
+	SetEventString( hEvent, "funfact_token", "#funfact_fallback1" );
 	SetEventInt( hEvent, "funfact_player", 0 );
 	SetEventInt( hEvent, "funfact_data1", 0 );
 	SetEventInt( hEvent, "funfact_data2", 0 );

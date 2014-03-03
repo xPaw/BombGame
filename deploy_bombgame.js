@@ -7,9 +7,14 @@ hookshot('refs/heads/master', function(info){
 
     console.log('Pulling & compiling');
 
-    exec('./compile_bombgame.sh', function(){
 
-        var conn = new Rcon('127.0.0.1', 27015, 'test');
+    exec('./compile_bombgame.sh', function(error, stdout, stderr){
+        console.log('stdout: ' + stdout);
+        console.log('stderr: ' + stderr);
+        if (error !== null) {
+          console.log('exec error: ' + error);
+        }
+        var conn = new Rcon('timmw.no-ip.org', 27015, 'test');
         conn.on('auth', function(error, stdout, stderr) {
             conn.send('say Received a GitHub hook!;sm plugins reload BombGame');
                 conn.disconnect();

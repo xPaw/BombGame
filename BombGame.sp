@@ -148,6 +148,11 @@ public OnMapStart( )
 	// Edit info_map_parameters
 	iEntity = FindEntityByClassname( iEntity, "info_map_parameters" );
 	
+	if( iEntity == -1 )
+	{
+		iEntity = CreateEntityByName( "info_map_parameters" );
+	}
+	
 	if( iEntity != -1 )
 	{
 		DispatchKeyValue( iEntity, "buying", "0" );

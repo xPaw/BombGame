@@ -4,8 +4,9 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 1 // Do this in a cvar
+#define IS_EXPOSURE_MODE 0 // Do this in a cvar
 #define EXPOSURE_TIME 25
+#define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
 
@@ -80,6 +81,8 @@ public OnPluginStart( )
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 	
 	g_hCvarGraceJoinTime = FindConVar( "mp_join_grace_time" );
+	
+	SetConVarBounds( g_hCvarGraceJoinTime, ConVarBound_Upper, true, MAX_GRACE_JOIN_TIME );
 }
 
 public OnPluginEnd( )
@@ -108,8 +111,10 @@ public OnConfigsExecuted( )
 	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
 	
 #if IS_EXPOSURE_MODE
-	ServerCommand( "mp_roundtime 10" );
+	SetConVarFloat( FindConVar( "mp_roundtime" ), 10.0 );
 #endif
+	
+	SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
 }
 
 public OnMapStart( )
@@ -177,8 +182,7 @@ public OnMapStart( )
 	
 	CreateTimer( 1.0, OnTimerCreateBot, _, TIMER_FLAG_NO_MAPCHANGE );
 	
-	SetConVarBounds( g_hCvarGraceJoinTime, ConVarBound_Upper, true, 1000.0 );
-	SetConVarFloat( g_hCvarGraceJoinTime, 1000.0 );
+	SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
 }
 
 public Action:OnTimerCreateBot( Handle:hTimer )
@@ -392,6 +396,8 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	if( !g_bStarting )
 	{
 		PrintToChatAll( "DEBUG: g_bStarting is not true, not starting bombgame..." ); // TODO
+		
+		SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
 		
 		return;
 	}

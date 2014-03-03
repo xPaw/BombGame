@@ -4,7 +4,7 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 0 // Do this in a cvar
+#define IS_EXPOSURE_MODE 1 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 
@@ -99,6 +99,14 @@ public OnWinPanelRound( Handle:hEvent, const String:szActionName[], bool:bDontBr
 		GetEventInt( hEvent, "funfact_data2" ),
 		GetEventInt( hEvent, "funfact_data3" )
 	);
+	
+	SetEventString( hEvent, "funfact_token", "This is a fun fact!" );
+	SetEventInt( hEvent, "funfact_player", 0 );
+	SetEventInt( hEvent, "funfact_data1", 0 );
+	SetEventInt( hEvent, "funfact_data2", 0 );
+	SetEventInt( hEvent, "funfact_data3", 0 );
+	
+	return Plugin_Changed;
 }
 
 public OnPluginEnd( )

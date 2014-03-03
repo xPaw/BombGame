@@ -78,12 +78,27 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
+	HookEvent( "cs_win_panel_round", OnWinPanelRound, EventHookMode_Pre );
 	
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 	
 	g_hCvarGraceJoinTime = FindConVar( "mp_join_grace_time" );
 	
 	SetConVarBounds( g_hCvarGraceJoinTime, ConVarBound_Upper, true, MAX_GRACE_JOIN_TIME );
+}
+
+public OnWinPanelRound( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	decl String:szName[ 32 ];
+	GetEventString( hEvent, "funfact_token", szName, sizeof( szName ) );
+	
+	PrintToChatAll( "DEBUG: funfact_token: %s, funfact_player: %i, funfact_data1: %i, funfact_data2: %i, funfact_data3: %i",
+		szName,
+		GetEventInt( hEvent, "funfact_player" ),
+		GetEventInt( hEvent, "funfact_data1" ),
+		GetEventInt( hEvent, "funfact_data2" ),
+		GetEventInt( hEvent, "funfact_data3" )
+	);
 }
 
 public OnPluginEnd( )
@@ -329,7 +344,7 @@ public Action:OnCommandStart( iClient, iArguments )
 		g_bStarting = true;
 		g_bIgnoreFirstRoundStart = false;
 		
-		CS_TerminateRound( 3.0, CSRoundEnd_GameStart );
+		CS_TerminateRound( 0.5, CSRoundEnd_Draw );
 	}
 	
 	return Plugin_Handled;
@@ -363,11 +378,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	CS_SetTeamScore( CS_TEAM_T, 37 );
 	SetTeamScore( CS_TEAM_T, 37 );
-	
-	decl String:szName[ 32 ];
-	GetEventString( hEvent, "objective", szName, sizeof( szName ) );
-	
-	PrintToChatAll( "DEBUG: round_start event! objective: %s", szName );
 	
 	g_iLastBomber = 0;
 	g_iPreviousBomber = 0;
@@ -463,10 +473,11 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	}
 	else if( iDead > 0 )
 	{
-		PrintToChatAll( "DEBUG: Did the game break?! %i alive, %i dead", iAlive, iDead );
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 Something magical happened, resetting the game." );
 		
 		ResetGame( );
+		
+		SetConVarInt( FindConVar( "mp_restartgame" ), 1 );
 	}
 	
 	g_flRoundTime = 0.0;

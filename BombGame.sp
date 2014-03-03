@@ -361,9 +361,7 @@ public Action:OnBeginNewMatch( Handle:hEvent, const String:szActionName[], bool:
 
 public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	PrintToChatAll( "DEBUG: round_announce_match_start event!" );
-	
-	return Plugin_Continue;
+	return Plugin_Handled;
 }
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

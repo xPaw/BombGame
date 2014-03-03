@@ -425,13 +425,18 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	
 	SetConVarFloat( g_hCvarGraceJoinTime, 0.0 ); // We don't want to allow late joins
 	
-	new iPlayers[ MaxClients ], iAlive, i;
+	new iPlayers[ MaxClients ], iAlive, iDead, i;
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
 		if( IsPlayerBombGamer( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
+		}
+		
+		if( g_bDeadPlayers[ i ] )
+		{
+			iDead++;
 		}
 	}
 	
@@ -472,6 +477,13 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		SetEventInt( hBonus, "time", 10 );
 		SetEventInt( hBonus, "wepID", _:CSWeapon_C4 );
 		FireEvent( hBonus );
+	}
+	else if( iDead > 0 )
+	{
+		PrintToChatAll( "DEBUG: Did the game break?! %i alive, %i dead", iAlive, iDead );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 Something magical happened, resetting the game." );
+		
+		ResetGame( );
 	}
 	
 	g_flRoundTime = 0.0;

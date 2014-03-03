@@ -77,6 +77,8 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
+	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
+	HookEvent( "begin_new_match",  OnBeginNewMatch, EventHookMode_Pre );
 	
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 	
@@ -345,13 +347,32 @@ public Action:OnTimerGiveBomb( Handle:hTimer, any:iSerial )
 	}
 }
 
+public Action:OnBeginNewMatch( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	PrintToChatAll( "DEBUG: begin_new_match event!" );
+	
+	return Plugin_Continue;
+}
+
+public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
+{
+	PrintToChatAll( "DEBUG: round_announce_match_start event!" );
+	
+	return Plugin_Continue;
+}
+
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	CS_SetTeamScore(CS_TEAM_CT, 13);
-	SetTeamScore(CS_TEAM_CT, 13);
+	CS_SetTeamScore( CS_TEAM_CT, 13 );
+	SetTeamScore( CS_TEAM_CT, 13 );
 	
-	CS_SetTeamScore(CS_TEAM_T, 37);
-	SetTeamScore(CS_TEAM_T, 37);
+	CS_SetTeamScore( CS_TEAM_T, 37 );
+	SetTeamScore( CS_TEAM_T, 37 );
+	
+	decl String:szName[ 32 ];
+	GetEventString( hEvent, "objective", szName, sizeof( szName ) );
+	
+	PrintToChatAll( "DEBUG: round_start event! objective: %s", szName );
 	
 	g_iLastBomber = 0;
 	g_iPreviousBomber = 0;
@@ -433,6 +454,19 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 #else
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 #endif
+		
+		// TODO: test
+		if( iAlive == 2 )
+		{
+			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
+			FireEvent( hAnnounce );
+		}
+		
+		// TODO: test
+		new Handle:hBonus = CreateEvent( "dm_bonus_weapon_start" );
+		SetEventInt( hBonus, "time", 10 );
+		SetEventInt( hBonus, "wepID", _:CSWeapon_C4 );
+		FireEvent( hBonus );
 	}
 	
 	g_flRoundTime = 0.0;

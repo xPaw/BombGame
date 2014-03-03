@@ -8,7 +8,7 @@ hookshot('refs/heads/master', function(info){
     console.log('Pulling & compiling');
 
 
-    exec('./compile_bombgame.sh', function(error, stdout, stderr){
+    exec('bash compile_bombgame.sh', function(error, stdout, stderr){
         console.log('stdout: ' + stdout);
         console.log('stderr: ' + stderr);
         if (error !== null) {

@@ -652,8 +652,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bGameRunning )
 	{
-		PrintToChatAll( "DEBUG: Client %i spawned while game is running (sound timer exists? %i)", iClient, g_hTimerSound != INVALID_HANDLE );
-		
 		if( !g_bInGame[ iClient ] )
 		{
 			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
@@ -663,9 +661,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			// TODO: wtf?
 			if( !IsFakeClient( iClient ) )
 			{
-				//SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
-				SetEntProp( iClient, Prop_Send, "m_iRespawnFrames", 60 );
-				SetEntPropFloat( iClient, Prop_Send, "m_flDeathTime", 0.0 );
+				SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
 			}
 			
 			SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
@@ -673,10 +669,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			
 			return;
 		}
-	}
-	else
-	{
-		//PrintToChatAll( "DEBUG: Client %i spawned", iClient );
 	}
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
@@ -705,12 +697,8 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 		
 		return Plugin_Changed;
 	}
-	else if( !g_bInGame[ iClient ] )
-	{
-		return Plugin_Handled;
-	}
 	
-	return Plugin_Continue;
+	return Plugin_Handled;
 }
 
 public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -749,9 +737,14 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			}
 		}
 		
-		if( g_bGameRunning )
+		if( g_bInGame[ iClient ] )
 		{
 			g_bInGame[ iClient ] = false;
+			
+			decl String:szName[ 32 ];
+			GetClientName( iClient, szName, sizeof( szName ) );
+			
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
 		}
 	}
 	

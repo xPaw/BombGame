@@ -653,26 +653,30 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	if( g_bGameRunning )
 	{
 		PrintToChatAll( "DEBUG: Client %i spawned while game is running (sound timer exists? %i)", iClient, g_hTimerSound != INVALID_HANDLE );
+		
+		if( !g_bInGame[ iClient ] )
+		{
+			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
+			
+			ForcePlayerSuicide( iClient );
+			
+			// TODO: wtf?
+			if( IsFakeClient( iClient ) )
+			{
+				//SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
+				SetEntProp( iClient, Prop_Send, "m_iRespawnFrames", 60 );
+				SetEntPropFloat( iClient, Prop_Send, "m_flDeathTime", 0.0 );
+			}
+			
+			SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
+			SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
+			
+			return;
+		}
 	}
 	else
 	{
-		PrintToChatAll( "DEBUG: Client %i spawned", iClient );
-	}
-	
-	if( !g_bInGame[ iClient ] )
-	{
-		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
-		
-		ForcePlayerSuicide( iClient );
-		
-		//SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
-		SetEntProp( iClient, Prop_Send, "m_iRespawnFrames", 60 );
-		SetEntPropFloat( iClient, Prop_Send, "m_flDeathTime", 0.0 );
-		
-		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
-		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
-		
-		return;
+		//PrintToChatAll( "DEBUG: Client %i spawned", iClient );
 	}
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
@@ -880,7 +884,8 @@ IsEnoughPlayersToPlay( )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsPlayerBombGamer( i ) )
+		//if( IsPlayerBombGamer( i ) ) // TODO?
+		if( IsClientInGame( i ) && GetClientTeam( i ) == CS_TEAM_T )
 		{
 			iPlayers++;
 			

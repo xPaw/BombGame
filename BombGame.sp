@@ -661,7 +661,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			ForcePlayerSuicide( iClient );
 			
 			// TODO: wtf?
-			if( IsFakeClient( iClient ) )
+			if( !IsFakeClient( iClient ) )
 			{
 				//SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
 				SetEntProp( iClient, Prop_Send, "m_iRespawnFrames", 60 );

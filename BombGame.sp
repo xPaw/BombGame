@@ -93,6 +93,11 @@ public OnPluginEnd( )
 	{
 		KickClient( g_iFakeClient, "Plugin end" );
 	}
+	
+	if( g_iCurrentBomber )
+	{
+		SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
+	}
 }
 
 public OnConfigsExecuted( )
@@ -355,7 +360,7 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 			if( IsClientInGame( i ) && GetClientTeam( i ) == CS_TEAM_SPECTATOR )
 			{
 				PrintToChatAll( "DEBUG: Moved player %i back to T", i );
-				CS_SwitchTeam( i, CS_TEAM_T );
+				ChangeClientTeam( i, CS_TEAM_T );
 			}
 		}
 	}
@@ -649,7 +654,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			{
 				g_bMoveBack[ i ] = true;
 				
-				CS_SwitchTeam( i, CS_TEAM_SPECTATOR );
+				ChangeClientTeam( i, CS_TEAM_SPECTATOR );
 				
 				PrintToChatAll( "DEBUG: Moved player %i to spectator", i );
 			}

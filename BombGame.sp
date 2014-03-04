@@ -22,6 +22,7 @@ public Plugin:myinfo =
 new g_iBombHeldTimer[ MAXPLAYERS ];
 new bool:g_bInGame[ MAXPLAYERS ];
 new g_bGameRunning;
+new g_iRounds;
 new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
@@ -341,11 +342,7 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	CS_SetTeamScore( CS_TEAM_CT, 13 );
-	SetTeamScore( CS_TEAM_CT, 13 );
-	
-	CS_SetTeamScore( CS_TEAM_T, 37 );
-	SetTeamScore( CS_TEAM_T, 37 );
+	SetAllTeamsScore( g_iRounds );
 	
 	g_iLastBomber = 0;
 	g_iPreviousBomber = 0;
@@ -422,7 +419,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 #endif
 		
-		if( iAlive == 2 )
+		if( g_iRounds > 0 && iAlive == 2 )
 		{
 			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
 			FireEvent( hAnnounce );
@@ -451,6 +448,9 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	}
 	
 	g_flRoundTime = 0.0;
+	g_iRounds++;
+	
+	SetAllTeamsScore( g_iRounds );
 }
 
 public Action:OnTimerIncreaseExposure( Handle:hTimer )
@@ -604,18 +604,18 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	
 	if( iPlayers == 1 )
 	{
-		ResetGame( );
-		
 		decl String:szName[ 32 ];
 		GetClientName( iAlivePlayer, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!\x01 %i rounds played!", szName, g_iRounds );
 		
 		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
 		
 		new Handle:hLeader = CreateEvent( "round_mvp" );
 		SetEventInt( hLeader, "userid", GetClientUserId( iAlivePlayer ) );
 		FireEvent( hLeader );
+		
+		ResetGame( );
 		
 		flDelay = 6.5;
 		iReason = CSRoundEnd_TerroristWin;
@@ -896,6 +896,7 @@ IsEnoughPlayersToPlay( )
 
 StartGame( )
 {
+	g_iRounds = 0;
 	g_bGameRunning = true;
 	
 	for( new i = 1; i <= MaxClients; i++ )
@@ -918,6 +919,7 @@ ResetGame( )
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
 	g_iPreviousBomber = 0;
+	g_iRounds = 0;
 }
 
 CheckEnoughPlayers( iClient )
@@ -998,6 +1000,15 @@ RemoveBomb( )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
+}
+
+SetAllTeamsScore( iScore )
+{
+	CS_SetTeamScore( CS_TEAM_CT, iScore );
+	SetTeamScore( CS_TEAM_CT, iScore );
+	
+	CS_SetTeamScore( CS_TEAM_T, iScore );
+	SetTeamScore( CS_TEAM_T, iScore );
 }
 
 InitializeNuke( )

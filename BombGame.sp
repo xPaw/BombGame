@@ -659,7 +659,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bGameRunning && !g_bInGame[ iClient ] )
 	{
-		if( GetEntProp( iClient, Prop_Data, "m_bIsControllingBot" ) )
+		if( GetEntProp( iClient, Prop_Send, "m_bIsControllingBot" ) )
 		{
 			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You're controling a bot!" );
 			PrintToChatAll( "DEBUG: %i is controlling a bot!!", iClient );

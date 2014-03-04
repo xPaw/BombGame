@@ -17,21 +17,28 @@ hookshot('refs/heads/master', function(info)
         }
         
         var conn = new rcon('timmw.no-ip.org', 27015, 'test');
+
         conn.on('auth', function()
         {
-            var length = info.commits.length;
+            conn.send('sm plugins refresh;sm plugins reload BombGame');
 
-            conn.send('say ' + info.pusher.name + ' pushed ' + length + ' commit' + ( length === 1 ? '' : 's' ) + ':;sm plugins reload BombGame');
-
-            for( var i = 0; i < length; i++ )
+            setTimeout(function()
             {
-                var commit = info.commits[ i ];
+                var length = info.commits.length;
 
-                conn.send( 'say ' + commit.author.name + ' | ' + commit.message );
-            }
+                conn.send('say ">> ' + info.pusher.name + ' pushed ' + length + ' commit' + (length === 1 ? '' : 's') + ': ' + info.compare + '"');
 
-            conn.disconnect();
+                for(var i = 0; i < length; i++)
+                {
+                    var commit = info.commits[ i ];
+
+                    conn.send('say ">> ' + commit.id.substring(0, 8) + ' | ' + commit.message + '"');
+                }
+
+                conn.disconnect();
+            }, 1111);
         });
+
         conn.connect();
     });
 

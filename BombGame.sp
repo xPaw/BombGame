@@ -4,7 +4,7 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 1 // Do this in a cvar
+#define IS_EXPOSURE_MODE 0 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 
@@ -20,8 +20,7 @@ public Plugin:myinfo =
 };
 
 new g_iBombHeldTimer[ MAXPLAYERS ];
-new g_bDeadPlayers[ MAXPLAYERS ];
-new g_bStarting;
+new bool:g_bInGame[ MAXPLAYERS ];
 new g_bGameRunning;
 new g_iFakeClient;
 new g_iLastBomber;
@@ -63,7 +62,6 @@ public OnPluginStart( )
 	AddNormalSoundHook( OnNormalSound );
 	
 	AddCommandListener( OnCommandCallVote, "callvote" );
-	AddCommandListener( OnCommandJoinClass, "joinclass" );
 	
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
@@ -220,6 +218,8 @@ public OnMapEnd( )
 
 public OnClientDisconnect( iClient )
 {
+	g_bInGame[ iClient ] = false;
+	
 	if( g_iFakeClient == iClient )
 	{
 		g_iFakeClient = 0;
@@ -244,14 +244,6 @@ public OnClientDisconnect( iClient )
 	}
 }
 
-public OnClientPutInServer( iClient )
-{
-	if( g_bGameRunning || g_bStarting )
-	{
-		g_bDeadPlayers[ iClient ] = true;
-	}
-}
-
 public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments )
 {
 	decl String:szIssue[ 16 ];
@@ -265,16 +257,6 @@ public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments 
 	}
 	
 	return Plugin_Continue;
-}
-
-public Action:OnCommandJoinClass( iClient, const String:szCommand[ ], iArguments )
-{
-	if( iClient > 0 && ( g_bGameRunning || g_bStarting ) )
-	{
-		PrintToChatAll( "DEBUG: %i joined team, but we forced them to be dead because game is in progress!!", iClient );
-		
-		g_bDeadPlayers[ iClient ] = true;
-	}
 }
 
 public Action:OnCommandHelp( iClient, iArguments )
@@ -314,7 +296,7 @@ public Action:OnCommandStuck( iClient, iArguments )
 
 public Action:OnCommandStart( iClient, iArguments )
 {
-	if( g_bStarting || g_bGameRunning )
+	if( g_bGameRunning )
 	{
 		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 The game is already running." );
 	}
@@ -326,10 +308,11 @@ public Action:OnCommandStart( iClient, iArguments )
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
 		
-		g_bStarting = true;
 		g_bIgnoreFirstRoundStart = false;
 		
 		CS_TerminateRound( 0.5, CSRoundEnd_Draw );
+		
+		StartGame( );
 	}
 	
 	return Plugin_Handled;
@@ -387,48 +370,37 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 If you want to start the game manually, say\x02 /start\x01" );
 	}
-	else if( !g_bStarting && !g_bGameRunning && IsEnoughPlayersToPlay( ) )
+	else if( !g_bGameRunning && IsEnoughPlayersToPlay( ) )
 	{
-		g_bStarting = true;
-		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
+		
+		StartGame( );
 	}
 }
 
 public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	if( !g_bStarting )
+	if( !g_bGameRunning )
 	{
-		PrintToChatAll( "DEBUG: g_bStarting is not true, not starting bombgame..." ); // TODO
-		
 		SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
 		
 		return;
 	}
 	
-	g_bStarting = false;
-	
 	SetConVarFloat( g_hCvarGraceJoinTime, 0.0 ); // We don't want to allow late joins
 	
-	new iPlayers[ MaxClients ], iAlive, iDead, i;
+	new iPlayers[ MaxClients ], iAlive, i;
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsPlayerBombGamer( i ) )
+		if( g_bInGame[ i ] && IsPlayerBombGamer( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
-		}
-		
-		if( g_bDeadPlayers[ i ] )
-		{
-			iDead++;
 		}
 	}
 	
 	if( iAlive > 1 )
 	{
-		g_bGameRunning = true;
-		
 		g_iCurrentBomber = g_iPreviousBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
@@ -450,13 +422,26 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
 #endif
 		
-		if( iAlive == 2 && iDead > 0 )
+		if( iAlive == 2 )
 		{
 			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
 			FireEvent( hAnnounce );
 		}
 	}
-	else if( iDead > 0 )
+	else if( iAlive == 1 )
+	{
+		iAlive = iPlayers[ 0 ];
+		
+		decl String:szName[ 32 ];
+		GetClientName( iAlive, szName, sizeof( szName ) );
+		
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!", szName );
+		
+		CS_SetMVPCount( iAlive, CS_GetMVPCount( iAlive ) + 1 );
+		
+		ResetGame( );
+	}
+	else
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 Something magical happened, resetting the game." );
 		
@@ -571,7 +556,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		
 		g_iLastBomber = iBomber;
 		
-		g_bDeadPlayers[ iBomber ] = true;
+		g_bInGame[ iBomber ] = false;
 		
 		if( IsPlayerAlive( iBomber ) )
 		{
@@ -598,9 +583,6 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		}
 	}
 	
-	g_bStarting = true;
-	g_bGameRunning = false;
-	
 	RemoveBomb( );
 	
 	new iPlayers, i, iAlivePlayer;
@@ -611,7 +593,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		g_iBombHeldTimer[ i ] = 0;
 #endif
 		
-		if( IsPlayerBombGamer( i ) )
+		if( g_bInGame[ i ] && IsPlayerAlive( i ) )
 		{
 			iAlivePlayer = i;
 			iPlayers++;
@@ -627,7 +609,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		decl String:szName[ 32 ];
 		GetClientName( iAlivePlayer, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s has won the bomb game!", szName );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!", szName );
 		
 		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
 		
@@ -676,7 +658,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		PrintToChatAll( "DEBUG: Client %i spawned", iClient );
 	}
 	
-	if( g_bDeadPlayers[ iClient ] )
+	if( !g_bInGame[ iClient ] )
 	{
 		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
 		
@@ -718,7 +700,7 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 		
 		return Plugin_Changed;
 	}
-	else if( g_bDeadPlayers[ iClient ] )
+	else if( !g_bInGame[ iClient ] )
 	{
 		return Plugin_Handled;
 	}
@@ -739,7 +721,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		g_iCurrentBomber = 0;
 		g_iLastBomber = iClient;
 		
-		g_bDeadPlayers[ iClient ] = true;
+		g_bInGame[ iClient ] = false;
 		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
@@ -764,7 +746,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		if( g_bGameRunning )
 		{
-			g_bDeadPlayers[ iClient ] = true;
+			g_bInGame[ iClient ] = false;
 		}
 	}
 	
@@ -773,7 +755,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	if( !g_bGameRunning || g_bStarting )
+	if( !g_bGameRunning )
 	{
 		return;
 	}
@@ -912,15 +894,27 @@ IsEnoughPlayersToPlay( )
 	return false;
 }
 
+StartGame( )
+{
+	g_bGameRunning = true;
+	
+	for( new i = 1; i <= MaxClients; i++ )
+	{
+		if( IsPlayerBombGamer( i ) )
+		{
+			g_bInGame[ i ] = true;
+		}
+	}
+}
+
 ResetGame( )
 {
 	for( new i = 1; i <= MaxClients; i++ )
 	{
-		g_bDeadPlayers[ i ] = false;
+		g_bInGame[ i ] = false;
 		g_iBombHeldTimer[ i ] = 0;
 	}
 	
-	g_bStarting = false;
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
 	g_iPreviousBomber = 0;

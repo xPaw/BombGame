@@ -23,7 +23,6 @@ public Plugin:myinfo =
 
 new g_iBombHeldTimer[ MAXPLAYERS ];
 new bool:g_bInGame[ MAXPLAYERS ];
-new bool:g_bMoveBack[ MAXPLAYERS ];
 new g_bGameRunning;
 new g_iRounds;
 new g_iFakeClient;
@@ -351,20 +350,6 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	for( new i = 1; i <= MaxClients; i++ )
-	{
-		if( g_bMoveBack[ i ] )
-		{
-			g_bMoveBack[ i ] = false;
-			
-			if( IsClientInGame( i ) && GetClientTeam( i ) == CS_TEAM_SPECTATOR )
-			{
-				PrintToChatAll( "DEBUG: Moved player %i back to T", i );
-				ChangeClientTeam( i, CS_TEAM_T );
-			}
-		}
-	}
-	
 	SetAllTeamsScore( g_iRounds );
 	
 	g_iLastBomber = 0;
@@ -647,18 +632,6 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		flDelay = 5.0;
 		iReason = CSRoundEnd_TargetBombed;
-		
-		for( i = 1; i <= MaxClients; i++ )
-		{
-			if( IsClientInGame( i ) && !g_bInGame[ i ] && GetClientTeam( i ) == CS_TEAM_T )
-			{
-				g_bMoveBack[ i ] = true;
-				
-				ChangeClientTeam( i, CS_TEAM_SPECTATOR );
-				
-				PrintToChatAll( "DEBUG: Moved player %i to spectator", i );
-			}
-		}
 	}
 	
 	return Plugin_Changed;
@@ -686,14 +659,22 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bGameRunning && !g_bInGame[ iClient ] )
 	{
-		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
-		
-		ForcePlayerSuicide( iClient );
-		
-		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
-		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
-		
-		return;
+		if( GetEntProp( iClient, Prop_Data, "m_bIsControllingBot" ) )
+		{
+			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You're controling a bot!" );
+			PrintToChatAll( "DEBUG: %i is controlling a bot!!", iClient );
+		}
+		else
+		{
+			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
+			
+			ForcePlayerSuicide( iClient );
+			
+			SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
+			SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
+			
+			return;
+		}
 	}
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );

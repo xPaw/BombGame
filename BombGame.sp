@@ -664,7 +664,9 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		ForcePlayerSuicide( iClient );
 		
-		SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
+		//SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
+		SetEntProp( iClient, Prop_Send, "m_iRespawnFrames", 60 );
+		SetEntPropFloat( iClient, Prop_Send, "m_flDeathTime", 0.0 );
 		
 		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );

@@ -23,6 +23,7 @@ public Plugin:myinfo =
 
 new g_iBombHeldTimer[ MAXPLAYERS ];
 new bool:g_bInGame[ MAXPLAYERS ];
+new bool:g_bMoveBack[ MAXPLAYERS ];
 new g_bGameRunning;
 new g_iRounds;
 new g_iFakeClient;
@@ -200,6 +201,8 @@ public Action:OnTimerCreateBot( Handle:hTimer )
 		if( g_iFakeClient > 0 )
 		{
 			CS_SwitchTeam( g_iFakeClient, CS_TEAM_CT );
+			
+			CS_SetClientClanTag( g_iFakeClient, "[BombGame]" );
 		}
 		else
 		{
@@ -343,6 +346,20 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
+	for( new i = 1; i <= MaxClients; i++ )
+	{
+		if( g_bMoveBack[ i ] )
+		{
+			g_bMoveBack[ i ] = false;
+			
+			if( IsClientInGame( i ) && GetClientTeam( i ) == CS_TEAM_SPECTATOR )
+			{
+				PrintToChatAll( "DEBUG: Moved player %i back to T", i );
+				CS_SwitchTeam( i, CS_TEAM_T );
+			}
+		}
+	}
+	
 	SetAllTeamsScore( g_iRounds );
 	
 	g_iLastBomber = 0;
@@ -625,6 +642,18 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		flDelay = 5.0;
 		iReason = CSRoundEnd_TargetBombed;
+		
+		for( i = 1; i <= MaxClients; i++ )
+		{
+			if( IsClientInGame( i ) && !g_bInGame[ i ] && GetClientTeam( i ) == CS_TEAM_T )
+			{
+				g_bMoveBack[ i ] = true;
+				
+				CS_SwitchTeam( i, CS_TEAM_SPECTATOR );
+				
+				PrintToChatAll( "DEBUG: Moved player %i to spectator", i );
+			}
+		}
 	}
 	
 	return Plugin_Changed;
@@ -650,25 +679,16 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		return;
 	}
 	
-	if( g_bGameRunning )
+	if( g_bGameRunning && !g_bInGame[ iClient ] )
 	{
-		if( !g_bInGame[ iClient ] )
-		{
-			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
-			
-			ForcePlayerSuicide( iClient );
-			
-			// TODO: wtf?
-			if( !IsFakeClient( iClient ) )
-			{
-				SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
-			}
-			
-			SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
-			SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
-			
-			return;
-		}
+		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
+		
+		ForcePlayerSuicide( iClient );
+		
+		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
+		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
+		
+		return;
 	}
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
@@ -690,15 +710,7 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	if( g_iLastBomber == iClient )
-	{
-		SetEventString( hEvent, "weapon", "hegrenade" );
-		SetEventInt( hEvent, "attacker", GetClientUserId( iClient ) ); // TODO: wtf?
-		
-		return Plugin_Changed;
-	}
-	
-	return Plugin_Handled;
+	return g_iLastBomber == iClient ? Plugin_Continue : Plugin_Handled;
 }
 
 public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

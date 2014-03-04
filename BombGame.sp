@@ -9,6 +9,7 @@
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
+#define OBS_MODE_ROAMING 6
 
 public Plugin:myinfo =
 {
@@ -26,7 +27,6 @@ new g_iRounds;
 new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
-new g_iPreviousBomber;
 new bool:g_bIgnoreFirstRoundStart;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
@@ -345,7 +345,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	SetAllTeamsScore( g_iRounds );
 	
 	g_iLastBomber = 0;
-	g_iPreviousBomber = 0;
 	g_iStatsBombDropped = 0;
 	g_iStatsBombSwitched = 0;
 	
@@ -398,7 +397,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	
 	if( iAlive > 1 )
 	{
-		g_iCurrentBomber = g_iPreviousBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
+		g_iCurrentBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
@@ -552,7 +551,8 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
 #endif
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times, bomber switched\x04 %i\x01 times during this round.", g_iStatsBombDropped, g_iStatsBombSwitched );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times.", g_iStatsBombDropped );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomber switched\x04 %i\x01 times during this round.", g_iStatsBombSwitched );
 		
 		g_iLastBomber = iBomber;
 		
@@ -664,6 +664,8 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		ForcePlayerSuicide( iClient );
 		
+		SetEntProp( iClient, Prop_Send, "m_iObserverMode", OBS_MODE_ROAMING );
+		
 		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
 		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
 		
@@ -692,11 +694,7 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 	if( g_iLastBomber == iClient )
 	{
 		SetEventString( hEvent, "weapon", "hegrenade" );
-		
-		if( g_iPreviousBomber > 0 && IsClientInGame( g_iPreviousBomber ) )
-		{
-			SetEventInt( hEvent, "attacker", GetClientUserId( g_iPreviousBomber ) );
-		}
+		SetEventInt( hEvent, "attacker", GetClientUserId( iClient ) ); // TODO: wtf?
 		
 		return Plugin_Changed;
 	}
@@ -778,7 +776,6 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 			SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
 		}
 		
-		g_iPreviousBomber = g_iCurrentBomber;
 		g_iCurrentBomber = iClient;
 		
 		MakeBomber( iClient );
@@ -918,7 +915,6 @@ ResetGame( )
 	
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
-	g_iPreviousBomber = 0;
 	g_iRounds = 0;
 }
 

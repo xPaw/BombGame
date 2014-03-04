@@ -7,6 +7,7 @@
 #define IS_EXPOSURE_MODE 0 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
+#define BOT_NAME "BombGame Coach"
 
 #define HIDEHUD_RADAR  ( 1 << 12 )
 #define OBS_MODE_ROAMING 6
@@ -194,7 +195,7 @@ public Action:OnTimerCreateBot( Handle:hTimer )
 {
 	if( !g_iFakeClient || !IsClientInGame( g_iFakeClient ) )
 	{
-		g_iFakeClient = CreateFakeClient( "BombGame Coach" );
+		g_iFakeClient = CreateFakeClient( BOT_NAME );
 		
 		if( g_iFakeClient > 0 )
 		{
@@ -639,7 +640,7 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		return;
 	}
 	
-	if( IsFakeClient( iClient ) )
+	if( iClient == g_iFakeClient && IsFakeClient( iClient ) )
 	{
 		SetEntityMoveType( iClient, MOVETYPE_NOCLIP );
 		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );

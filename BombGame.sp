@@ -21,7 +21,15 @@ public Plugin:myinfo =
 	url = "http://xpaw.ru"
 };
 
+enum PlayerTag
+{
+	PlayerTag_None = 0,
+	PlayerTag_Bomb,
+	PlayerTag_Dead
+};
+
 new g_iBombHeldTimer[ MAXPLAYERS ];
+new PlayerTag:g_iPlayerTag[ MAXPLAYERS ];
 new bool:g_bInGame[ MAXPLAYERS ];
 new g_bGameRunning;
 new g_iRounds;
@@ -251,6 +259,11 @@ public OnClientDisconnect( iClient )
 	{
 		CheckEnoughPlayers( iClient );
 	}
+}
+
+public OnClientSettingsChanged( iClient )
+{
+	UpdatePlayerTag( iClient );
 }
 
 public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments )
@@ -589,6 +602,8 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 				AcceptEntityInput( iExplosion, "Kill" );
 			}
 		}
+		
+		SetPlayerTag( iBomber, PlayerTag_Dead );
 	}
 	
 	RemoveBomb( );
@@ -710,6 +725,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s suicided while being the bomber.", szName );
 		
+		SetPlayerTag( iClient, PlayerTag_Dead );
+		
 		EndRound( );
 	}
 	else
@@ -734,6 +751,8 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			GetClientName( iClient, szName, sizeof( szName ) );
 			
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
+			
+			SetPlayerTag( iClient, PlayerTag_Dead );
 		}
 	}
 	
@@ -763,6 +782,8 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 			HideRadar( g_iCurrentBomber );
 			
 			SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
+			
+			SetPlayerTag( g_iCurrentBomber, PlayerTag_None );
 		}
 		
 		g_iCurrentBomber = iClient;
@@ -848,6 +869,8 @@ MakeBomber( iClient )
 	g_iPreviousPlayerModel = GetEntProp( iClient, Prop_Data, "m_nModelIndex", 2 );
 	
 	SetEntProp( iClient, Prop_Data, "m_nModelIndex", g_iPlayerModel, 2 );
+	
+	SetPlayerTag( iClient, PlayerTag_Bomb );
 }
 
 EndRound( )
@@ -901,11 +924,36 @@ ResetGame( )
 	{
 		g_bInGame[ i ] = false;
 		g_iBombHeldTimer[ i ] = 0;
+		
+		if( i != g_iFakeClient )
+		{
+			SetPlayerTag( i, PlayerTag_None );
+		}
 	}
 	
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
 	g_iRounds = 0;
+}
+
+SetPlayerTag( iClient, PlayerTag:iNewTag )
+{
+	if( g_iPlayerTag[ iClient ] != iNewTag )
+	{
+		g_iPlayerTag[ iClient ] = iNewTag;
+		
+		UpdatePlayerTag( iClient );
+	}
+}
+
+UpdatePlayerTag( iClient )
+{
+	switch( g_iPlayerTag[ iClient ] )
+	{
+		case PlayerTag_None: CS_SetClientClanTag( iClient, "" );
+		case PlayerTag_Bomb: CS_SetClientClanTag( iClient, "#Cstrike_TitlesTXT_BOMB" ); // TODO
+		case PlayerTag_Dead: CS_SetClientClanTag( iClient, "#Cstrike_TitlesTXT_DEAD" ); // TODO
+	}
 }
 
 CheckEnoughPlayers( iClient )

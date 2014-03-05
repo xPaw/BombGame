@@ -643,7 +643,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( !IsPlayerAlive( iClient ) )
 	{
-		PrintToChatAll( "DEBUG: Client %i spawned, but not alive", iClient );
 		return;
 	}
 	
@@ -659,22 +658,14 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( g_bGameRunning && !g_bInGame[ iClient ] )
 	{
-		if( GetEntProp( iClient, Prop_Send, "m_bIsControllingBot" ) )
-		{
-			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You're controling a bot!" );
-			PrintToChatAll( "DEBUG: %i is controlling a bot!!", iClient );
-		}
-		else
-		{
-			PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
-			
-			ForcePlayerSuicide( iClient );
-			
-			SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
-			SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
-			
-			return;
-		}
+		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
+		
+		ForcePlayerSuicide( iClient );
+		
+		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
+		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
+		
+		return;
 	}
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
@@ -957,7 +948,9 @@ CheckEnoughPlayers( iClient )
 	}
 	else
 	{
-		PrintToChatAll( "What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
+		// TODO: This seems to happen when a player takes control over a bot that currently has the bomb
+		
+		PrintToChatAll( "DEBUG: What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
 		
 		LogError( "Abnormal!! What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
 	}

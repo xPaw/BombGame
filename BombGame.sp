@@ -953,6 +953,11 @@ SetPlayerTag( iClient, PlayerTag:iNewTag )
 
 UpdatePlayerTag( iClient )
 {
+	if( !IsClientInGame( iClient ) )
+	{
+		return;
+	}
+	
 	switch( g_iPlayerTag[ iClient ] )
 	{
 		case PlayerTag_None: CS_SetClientClanTag( iClient, "" );

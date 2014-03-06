@@ -25,7 +25,7 @@ enum PlayerTag
 {
 	PlayerTag_None = 0,
 	PlayerTag_Bomb,
-	PlayerTag_Dead
+	PlayerTag_Alive
 };
 
 new g_iBombHeldTimer[ MAXPLAYERS ];
@@ -617,7 +617,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			}
 		}
 		
-		SetPlayerTag( iBomber, PlayerTag_Dead );
+		SetPlayerTag( iBomber, PlayerTag_None );
 	}
 	
 	RemoveBomb( );
@@ -716,7 +716,7 @@ public Action:OnPlayerPreDeath( Handle:hEvent, const String:szActionName[], bool
 {
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
-	return g_iLastBomber == iClient ? Plugin_Continue : Plugin_Handled;
+	return g_iCurrentBomber == iClient || g_iLastBomber == iClient ? Plugin_Continue : Plugin_Handled;
 }
 
 public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -739,7 +739,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s suicided while being the bomber.", szName );
 		
-		SetPlayerTag( iClient, PlayerTag_Dead );
+		SetPlayerTag( iClient, PlayerTag_None );
 		
 		EndRound( );
 	}
@@ -766,7 +766,7 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
 			
-			SetPlayerTag( iClient, PlayerTag_Dead );
+			SetPlayerTag( iClient, PlayerTag_None );
 		}
 	}
 	
@@ -797,7 +797,7 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 			
 			SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
 			
-			SetPlayerTag( g_iCurrentBomber, PlayerTag_None );
+			SetPlayerTag( g_iCurrentBomber, PlayerTag_Alive );
 		}
 		
 		g_iCurrentBomber = iClient;
@@ -928,6 +928,8 @@ StartGame( )
 		if( IsPlayerBombGamer( i ) )
 		{
 			g_bInGame[ i ] = true;
+			
+			SetPlayerTag( i, PlayerTag_Alive );
 		}
 	}
 }
@@ -969,9 +971,9 @@ UpdatePlayerTag( iClient )
 	
 	switch( g_iPlayerTag[ iClient ] )
 	{
-		case PlayerTag_None: CS_SetClientClanTag( iClient, "" );
-		case PlayerTag_Bomb: CS_SetClientClanTag( iClient, "BOMB" );
-		case PlayerTag_Dead: CS_SetClientClanTag( iClient, "DEAD" );
+		case PlayerTag_None : CS_SetClientClanTag( iClient, "" );
+		case PlayerTag_Bomb : CS_SetClientClanTag( iClient, "BOMB" );
+		case PlayerTag_Alive: CS_SetClientClanTag( iClient, "❤" );
 	}
 }
 

@@ -14,11 +14,11 @@
 
 public Plugin:myinfo =
 {
-	name = "BombGame",
-	author = "xPaw",
+	name        = "BombGame",
 	description = "Good ol' bomb game.",
-	version = "1.0",
-	url = "http://xpaw.ru"
+	author      = "xPaw",
+	version     = "1.0",
+	url         = "http://xpaw.ru"
 };
 
 enum PlayerTag
@@ -259,6 +259,11 @@ public OnClientDisconnect( iClient )
 	{
 		CheckEnoughPlayers( iClient );
 	}
+}
+
+public OnClientPutInServer( iClient )
+{
+	UpdatePlayerTag( iClient );
 }
 
 public OnClientSettingsChanged( iClient )
@@ -951,8 +956,8 @@ UpdatePlayerTag( iClient )
 	switch( g_iPlayerTag[ iClient ] )
 	{
 		case PlayerTag_None: CS_SetClientClanTag( iClient, "" );
-		case PlayerTag_Bomb: CS_SetClientClanTag( iClient, "#Cstrike_TitlesTXT_BOMB" ); // TODO
-		case PlayerTag_Dead: CS_SetClientClanTag( iClient, "#Cstrike_TitlesTXT_DEAD" ); // TODO
+		case PlayerTag_Bomb: CS_SetClientClanTag( iClient, "BOMB" );
+		case PlayerTag_Dead: CS_SetClientClanTag( iClient, "DEAD" );
 	}
 }
 

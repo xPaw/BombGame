@@ -105,6 +105,11 @@ public OnPluginEnd( )
 	{
 		SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
 	}
+	
+	for( new i = 1; i <= MaxClients; i++ )
+	{
+		SetPlayerTag( i, PlayerTag_None );
+	}
 }
 
 public OnConfigsExecuted( )

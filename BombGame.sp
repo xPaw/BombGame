@@ -108,7 +108,10 @@ public OnPluginEnd( )
 	
 	for( new i = 1; i <= MaxClients; i++ )
 	{
-		SetPlayerTag( i, PlayerTag_None );
+		if( IsClientInGame( i ) )
+		{
+			CS_SetClientClanTag( i, "" );
+		}
 	}
 }
 
@@ -241,6 +244,7 @@ public OnMapEnd( )
 public OnClientDisconnect( iClient )
 {
 	g_bInGame[ iClient ] = false;
+	g_iPlayerTag[ iClient ] = PlayerTag_None;
 	
 	if( g_iFakeClient == iClient )
 	{

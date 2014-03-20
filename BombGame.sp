@@ -4,7 +4,7 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 0 // Do this in a cvar
+#define IS_EXPOSURE_MODE 1 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 #define BOT_NAME "BombGame Coach"
@@ -130,7 +130,11 @@ public OnConfigsExecuted( )
 	PrecacheSound( "weapons/hegrenade/explode3.wav" );
 	PrecacheModel( "sprites/zerogxplode.spr" );
 	
+#if IS_EXPOSURE_MODE
+	g_iPlayerModel = PrecacheModel( "models/player/zombie.mdl" );
+#else
 	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
+#endif
 	
 #if IS_EXPOSURE_MODE
 	SetConVarFloat( FindConVar( "mp_roundtime" ), 10.0 );

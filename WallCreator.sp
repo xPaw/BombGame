@@ -1320,6 +1320,8 @@ SpawnZone(zoneIndex)
 	DispatchKeyValue(zone, "targetname", ZoneName);
 	//DispatchKeyValue(zone, "solid", "2");
 	DispatchKeyValue(zone, "model", ZONES_MODEL);
+	DispatchKeyValue(zone, "StartDisabled", "0");
+	DispatchKeyValue(zone, "spawnflags", "4097");
 	
 	// Spawn an entity
 	DispatchSpawn(zone);

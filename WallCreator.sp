@@ -4,11 +4,12 @@
 #include < cstrike >
 
 #define PREFIX            " \x01\x0B\x04[Wall Creator]\x01 "
-#define ZONES_MODEL       "models/props_unique/airport/line_post.mdl"
+#define ZONES_MODEL       "models/error.mdl"
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
 #define BRUSH_ENTITY      "prop_dynamic_override"
+#define TELEPORT_ENTITY   "trigger_bomb_reset"
 
 enum // Just makes plugin readable
 {
@@ -1309,8 +1310,28 @@ SpawnZone(zoneIndex)
 
 	AcceptEntityInput(zone, "EnableCollision");
 	
-	SetEntityRenderColor(zone, 255, 127, 0, 200);
-	SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
+	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 0x020);
+	
+	// Trigger
+	zone = CreateEntityByName(TELEPORT_ENTITY);
+
+	// Set name
+	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
+	DispatchKeyValue(zone, "targetname", ZoneName);
+	DispatchKeyValue(zone, "solid", "2");
+	DispatchKeyValue(zone, "model", ZONES_MODEL);
+	
+	// Spawn an entity
+	DispatchSpawn(zone);
+
+	// Since its brush entity, use ActivateEntity as well
+	ActivateEntity(zone);
+
+	// Set mins and maxs for entity
+	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
+	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
+
+	AcceptEntityInput(zone, "EnableCollision");
 }
 
 /* KillZone()
@@ -1327,6 +1348,16 @@ KillZone(zoneIndex)
 
 	zone = INIT;
 	while ((zone = FindEntityByClassname(zone, BRUSH_ENTITY)) != INIT)
+	{
+		if (IsValidEntity(zone)
+		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap
+		&& StrEqual(class[8], ZoneName, false)) // And check if m_iName is equal to name from array
+		{
+			AcceptEntityInput(zone, "Kill");
+			break;
+		}
+	}
+	while ((zone = FindEntityByClassname(zone, TELEPORT_ENTITY)) != INIT)
 	{
 		if (IsValidEntity(zone)
 		&& GetEntPropString(zone, Prop_Data, "m_iName", class, sizeof(class)) // Get m_iName datamap

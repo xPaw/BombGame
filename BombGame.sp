@@ -4,7 +4,7 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 1 // Do this in a cvar
+#define IS_EXPOSURE_MODE 0 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 #define BOT_NAME "BombGame Coach"

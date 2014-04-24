@@ -4,7 +4,7 @@
 #include < cstrike >
 
 #define PREFIX            " \x01\x0B\x04[Wall Creator]\x01 "
-#define ZONES_MODEL       "models/error.mdl"
+#define ZONES_MODEL       "models/props/cs_office/vending_machine.mdl"
 #define INIT              -1
 #define MAX_ZONE_LENGTH   64
 #define LIFETIME_INTERVAL 5.0
@@ -1310,7 +1310,7 @@ SpawnZone(zoneIndex)
 
 	AcceptEntityInput(zone, "EnableCollision");
 	
-	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 0x020);
+	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
 	
 	// Trigger
 	zone = CreateEntityByName(TELEPORT_ENTITY);
@@ -1318,7 +1318,7 @@ SpawnZone(zoneIndex)
 	// Set name
 	Format(ZoneName, sizeof(ZoneName), "sm_zone_%s", ZoneName);
 	DispatchKeyValue(zone, "targetname", ZoneName);
-	DispatchKeyValue(zone, "solid", "2");
+	//DispatchKeyValue(zone, "solid", "2");
 	DispatchKeyValue(zone, "model", ZONES_MODEL);
 	
 	// Spawn an entity
@@ -1332,6 +1332,10 @@ SpawnZone(zoneIndex)
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
 	AcceptEntityInput(zone, "EnableCollision");
+	
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	
+	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
 }
 
 /* KillZone()

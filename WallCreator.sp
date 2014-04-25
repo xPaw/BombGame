@@ -1335,7 +1335,8 @@ SpawnZone(zoneIndex)
 
 	AcceptEntityInput(zone, "EnableCollision");
 	
-	SetEntProp(zone, Prop_Send, "m_nSolidType", 2);
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 1);
+	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 524);
 	
 	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
 }

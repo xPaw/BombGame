@@ -1178,7 +1178,7 @@ public Action:Timer_ShowZones(Handle:timer)
 		}
 #else
 		//TE_SendBeamBoxToClient(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 0, 127, 255, 200 }, 0);
-		TE_SendCrossTest(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 240, 0, 0, 200 }, 0);
+		TE_SendCrossTest(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 255, 0, 0, 255 }, 0);
 #endif
 	}
 }
@@ -1312,11 +1312,6 @@ SpawnZone(zoneIndex)
 	AcceptEntityInput(zone, "EnableCollision");
 	
 	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
-	
-	
-	//test
-	SetEntProp(zone, Prop_Send, "m_nSolidType", 1);
-	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 524);
 	
 	// Trigger
 	zone = CreateEntityByName(TELEPORT_ENTITY);
@@ -1477,7 +1472,7 @@ TE_SendCrossTest(client, const Float:upc[3], const Float:btc[3], ModelIndex, Hal
 	TE_SetupBeamPoints(upc, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
 	TE_SendToClient2(client);
 	
-	TE_SetupBeamPoints(tc1, tc6, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SetupBeamPoints(tc2, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
 	TE_SendToClient2(client);
 	
 	

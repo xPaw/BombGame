@@ -1313,6 +1313,11 @@ SpawnZone(zoneIndex)
 	
 	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
 	
+	
+	//test
+	SetEntProp(zone, Prop_Send, "m_nSolidType", 1);
+	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 524);
+	
 	// Trigger
 	zone = CreateEntityByName(TELEPORT_ENTITY);
 
@@ -1472,16 +1477,9 @@ TE_SendCrossTest(client, const Float:upc[3], const Float:btc[3], ModelIndex, Hal
 	TE_SetupBeamPoints(upc, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
 	TE_SendToClient2(client);
 	
-	TE_SetupBeamPoints(tc2, tc6, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SetupBeamPoints(tc1, tc6, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
 	TE_SendToClient2(client);
 	
-	
-	TE_SetupBeamPoints(tc6, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc4, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc5, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
 	
 	// Draw all the edges
 	TE_SetupBeamPoints(upc, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
@@ -1491,26 +1489,12 @@ TE_SendCrossTest(client, const Float:upc[3], const Float:btc[3], ModelIndex, Hal
 	TE_SetupBeamPoints(upc, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
 	TE_SendToClient2(client);
 	
-	/*TE_SetupBeamPoints(tc6, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc6, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);*/
-	
 	TE_SetupBeamPoints(tc6, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
 	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc4, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
 	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc5, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
 	TE_SendToClient2(client);
-	
-	/*TE_SetupBeamPoints(tc5, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc5, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
-	
-	TE_SetupBeamPoints(tc4, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc4, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);*/
 }
 
 /**

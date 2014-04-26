@@ -2,7 +2,7 @@ versioninfo
 {
 	"editorversion" "400"
 	"editorbuild" "6339"
-	"mapversion" "63"
+	"mapversion" "67"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -20,7 +20,7 @@ viewsettings
 world
 {
 	"id" "1"
-	"mapversion" "63"
+	"mapversion" "67"
 	"classname" "worldspawn"
 	"detailmaterial" "detail/detailsprites"
 	"detailvbsp" "detail.vbsp"
@@ -8254,7 +8254,7 @@ world
 		side
 		{
 			"id" "6645"
-			"plane" "(-346 -387 292) (-346 -387 56) (-346 -361 56)"
+			"plane" "(-346 -387 292) (-346 -387 56) (-346 -362 56)"
 			"material" "TOOLS/TOOLSCLIP"
 			"uaxis" "[0 1 0 -12] 0.25"
 			"vaxis" "[0 0 -1 24] 0.25"
@@ -8265,7 +8265,7 @@ world
 		side
 		{
 			"id" "6644"
-			"plane" "(326 -361 292) (326 -361 56) (326 -387 56)"
+			"plane" "(326 -362 292) (326 -362 56) (326 -387 56)"
 			"material" "TOOLS/TOOLSCLIP"
 			"uaxis" "[0 1 0 -12] 0.25"
 			"vaxis" "[0 0 -1 24] 0.25"
@@ -8287,7 +8287,7 @@ world
 		side
 		{
 			"id" "6642"
-			"plane" "(-346 -361 292) (-346 -361 56) (326 -361 56)"
+			"plane" "(-346 -362 292) (-346 -362 56) (326 -362 56)"
 			"material" "TOOLS/TOOLSCLIP"
 			"uaxis" "[1 0 0 -8] 0.25"
 			"vaxis" "[0 0 -1 32] 0.25"
@@ -8298,7 +8298,7 @@ world
 		side
 		{
 			"id" "6641"
-			"plane" "(-346 -361 56) (-346 -387 56) (326 -387 56)"
+			"plane" "(-346 -362 56) (-346 -387 56) (326 -387 56)"
 			"material" "TOOLS/TOOLSCLIP"
 			"uaxis" "[0 -1 0 20] 0.25"
 			"vaxis" "[-1 0 0 8] 0.25"
@@ -8309,7 +8309,7 @@ world
 		side
 		{
 			"id" "6640"
-			"plane" "(-346 -387 292) (-346 -361 292) (326 -361 292)"
+			"plane" "(-346 -387 292) (-346 -362 292) (326 -362 292)"
 			"material" "TOOLS/TOOLSCLIP"
 			"uaxis" "[0 1 0 -20] 0.25"
 			"vaxis" "[-1 0 0 8] 0.25"
@@ -9280,7 +9280,7 @@ world
 			dispinfo
 			{
 				"power" "3"
-				"startposition" "[-370.012 -347 56]"
+				"startposition" "[-370.02 -347 56]"
 				"flags" "0"
 				"elevation" "0"
 				"subdiv" "0"
@@ -9757,7 +9757,7 @@ world
 			dispinfo
 			{
 				"power" "3"
-				"startposition" "[345 553 135.998]"
+				"startposition" "[345 553 136]"
 				"flags" "0"
 				"elevation" "0"
 				"subdiv" "0"
@@ -21304,7 +21304,7 @@ entity
 	"classname" "info_player_terrorist"
 	"angles" "0 144 0"
 	"enabled" "1"
-	"origin" "-93 -286 40"
+	"origin" "-78.84 -277 44"
 	editor
 	{
 		"color" "220 30 220"
@@ -21409,7 +21409,7 @@ entity
 	"classname" "info_player_terrorist"
 	"angles" "0 90 0"
 	"enabled" "1"
-	"origin" "34.84 -295.27 39.407"
+	"origin" "49 -286 46"
 	editor
 	{
 		"color" "220 30 220"
@@ -21476,38 +21476,6 @@ entity
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[-14268 5000]"
-	}
-}
-entity
-{
-	"id" "1168"
-	"classname" "info_particle_system"
-	"angles" "27.2684 24.351 11.7146"
-	"effect_name" "mill_dust_volume_700_200"
-	"start_active" "1"
-	"origin" "222.498 -6.195 28.97"
-	editor
-	{
-		"color" "220 30 220"
-		"visgroupshown" "1"
-		"visgroupautoshown" "1"
-		"logicalpos" "[1500 -11268]"
-	}
-}
-entity
-{
-	"id" "1233"
-	"classname" "info_particle_system"
-	"angles" "27.2684 24.351 11.7146"
-	"effect_name" "mill_dust_volume_700_200"
-	"start_active" "1"
-	"origin" "-263.63 10.388 35.058"
-	editor
-	{
-		"color" "220 30 220"
-		"visgroupshown" "1"
-		"visgroupautoshown" "1"
-		"logicalpos" "[1500 -10768]"
 	}
 }
 entity

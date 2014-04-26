@@ -42,13 +42,13 @@ exec('git pull', function(error, stdout, stderr){
                 {
                     var length = info.commits.length;
 
-                    conn.send('say ">> ' + info.pusher.name + ' pushed ' + length + ' commit' + (length === 1 ? '' : 's') + ': ' + info.compare + '"');
+                    conn.send('say ' + info.pusher.name + ' pushed ' + length + ' commit' + (length === 1 ? '' : 's') + ': ' + info.compare;
 
                     for(var i = 0; i < length; i++)
                     {
                         var commit = info.commits[ i ];
 
-                        conn.send('say ">> ' + commit.id.substring(0, 8) + ' | ' + commit.message + '"');
+                        conn.send('say >> ' + commit.message);
                     }
 
                     conn.disconnect();

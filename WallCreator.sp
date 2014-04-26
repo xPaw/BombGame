@@ -1177,7 +1177,8 @@ public Action:Timer_ShowZones(Handle:timer)
 			}
 		}
 #else
-		TE_SendBeamBoxToClient(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 0, 127, 255, 200 }, 0);
+		//TE_SendBeamBoxToClient(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 0, 127, 255, 200 }, 0);
+		TE_SendCrossTest(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 240, 0, 0, 200 }, 0);
 #endif
 	}
 }
@@ -1445,6 +1446,60 @@ GetMiddleOfABox(const Float:vec1[3], const Float:vec2[3], Float:buffer[3])
 	AddVectors(vec1, mid, buffer);
 }
 
+TE_SendCrossTest(client, const Float:upc[3], const Float:btc[3], ModelIndex, HaloIndex, StartFrame, FrameRate, const Float:Life, const Float:Width, const Float:EndWidth, FadeLength, const Float:Amplitude, const Color[4], Speed)
+{
+	// Create the additional corners of the box
+	decl Float:tc1[] = {0.0, 0.0, 0.0};
+	decl Float:tc2[] = {0.0, 0.0, 0.0};
+	decl Float:tc3[] = {0.0, 0.0, 0.0};
+	decl Float:tc4[] = {0.0, 0.0, 0.0};
+	decl Float:tc5[] = {0.0, 0.0, 0.0};
+	decl Float:tc6[] = {0.0, 0.0, 0.0};
+
+	AddVectors(tc1, upc, tc1);
+	AddVectors(tc2, upc, tc2);
+	AddVectors(tc3, upc, tc3);
+	AddVectors(tc4, btc, tc4);
+	AddVectors(tc5, btc, tc5);
+	AddVectors(tc6, btc, tc6);
+
+	tc1[0] = btc[2];
+	tc2[1] = btc[1];
+	tc3[2] = btc[0];
+	tc4[0] = upc[2];
+	tc5[1] = upc[1];
+	tc6[2] = upc[0];
+
+	// Draw all the edges
+	TE_SetupBeamPoints(upc, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(upc, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(upc, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	
+	TE_SetupBeamPoints(tc6, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc6, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc6, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	
+	TE_SetupBeamPoints(tc4, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc5, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	
+	TE_SetupBeamPoints(tc5, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc5, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	
+	TE_SetupBeamPoints(tc4, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc4, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
+}
+
 /**
  * Sets up a boxed beam effect.
  *
@@ -1514,7 +1569,6 @@ TE_SendBeamBoxToClient(client, const Float:upc[3], const Float:btc[3], ModelInde
 	TE_SetupBeamPoints(tc4, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
 	TE_SendToClient2(client);
 	TE_SetupBeamPoints(tc4, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	
 }
 
 TE_SendToClient2( iClient )

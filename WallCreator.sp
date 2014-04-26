@@ -1329,16 +1329,26 @@ SpawnZone(zoneIndex)
 	// Since its brush entity, use ActivateEntity as well
 	ActivateEntity(zone);
 
+	TeleportEntity(zone, middle, NULL_VECTOR, NULL_VECTOR);
+
 	// Set mins and maxs for entity
 	SetEntPropVector(zone, Prop_Send, "m_vecMins", m_vecMins);
 	SetEntPropVector(zone, Prop_Send, "m_vecMaxs", m_vecMaxs);
 
-	AcceptEntityInput(zone, "EnableCollision");
-	
 	SetEntProp(zone, Prop_Send, "m_nSolidType", 1);
 	SetEntProp(zone, Prop_Send, "m_usSolidFlags", 524);
 	
 	SetEntProp(zone, Prop_Send, "m_fEffects", GetEntProp(zone, Prop_Send, "m_fEffects") | 32);
+	
+	AcceptEntityInput(zone, "Enable");
+	
+	HookSingleEntityOutput(zone, "OnStartTouch", callback, false); 
+}
+
+
+public callback(const String:output[], caller, activator, Float:delay) 
+{ 
+    PrintToChatAll("output %s, caller %i, activator %i, delay %0.1f", output, caller, activator, delay); 
 }
 
 /* KillZone()

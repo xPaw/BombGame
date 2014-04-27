@@ -1153,8 +1153,10 @@ public Panel_Confirmation(Handle:menu, MenuAction:action, client, param)
  * -------------------------------------------------------------------------- */
 public Action:Timer_ShowZones(Handle:timer)
 {
+	new size = GetArraySize(ZonesArray);
+	
 	// Get all zones
-	for (new i; i < GetArraySize(ZonesArray); i++)
+	for (new i; i < size; i++)
 	{
 		// Initialize positions, other stuff
 		decl Float:pos1[3], Float:pos2[3];
@@ -1178,7 +1180,7 @@ public Action:Timer_ShowZones(Handle:timer)
 		}
 #else
 		//TE_SendBeamBoxToClient(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 0, 127, 255, 200 }, 0);
-		TE_SendCrossTest(0, pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 255, 0, 0, 255 }, 0);
+		TE_SendCrossTest(pos1, pos2, LaserMaterial, HaloMaterial, 0, 30, LIFETIME_INTERVAL, 2.0, 2.0, 2, 1.0, { 255, 0, 0, 255 }, 0);
 #endif
 	}
 }
@@ -1445,7 +1447,7 @@ GetMiddleOfABox(const Float:vec1[3], const Float:vec2[3], Float:buffer[3])
 	AddVectors(vec1, mid, buffer);
 }
 
-TE_SendCrossTest(client, const Float:upc[3], const Float:btc[3], ModelIndex, HaloIndex, StartFrame, FrameRate, const Float:Life, const Float:Width, const Float:EndWidth, FadeLength, const Float:Amplitude, const Color[4], Speed)
+TE_SendCrossTest(const Float:upc[3], const Float:btc[3], ModelIndex, HaloIndex, StartFrame, FrameRate, const Float:Life, const Float:Width, const Float:EndWidth, FadeLength, const Float:Amplitude, const Color[4], Speed)
 {
 	// Create the additional corners of the box
 	decl Float:tc1[] = {0.0, 0.0, 0.0};
@@ -1470,26 +1472,19 @@ TE_SendCrossTest(client, const Float:upc[3], const Float:btc[3], ModelIndex, Hal
 	tc6[2] = upc[2];
 
 	TE_SetupBeamPoints(upc, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
+	TE_SendToAll();
 	
 	TE_SetupBeamPoints(tc2, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, Color, Speed);
-	TE_SendToClient2(client);
+	TE_SendToAll();
 	
+	TE_SetupBeamPoints(tc2, tc6, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,0,255,200}, Speed);
+	TE_SendToAll();
 	
-	// Draw all the edges
-	TE_SetupBeamPoints(upc, tc1, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(upc, tc2, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(upc, tc3, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
-	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc2, tc5, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,255,200}, Speed);
+	TE_SendToAll();
 	
-	TE_SetupBeamPoints(tc6, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc4, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
-	TE_SendToClient2(client);
-	TE_SetupBeamPoints(tc5, btc, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {0,255,0,200}, Speed);
-	TE_SendToClient2(client);
+	TE_SetupBeamPoints(tc1, tc4, ModelIndex, HaloIndex, StartFrame, FrameRate, Life, Width, EndWidth, FadeLength, Amplitude, {255,0,255,200}, Speed);
+	TE_SendToAll();
 }
 
 /**

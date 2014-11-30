@@ -4,7 +4,7 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 0 // Do this in a cvar
+#define IS_EXPOSURE_MODE 1 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 #define BOT_NAME "BombGame Coach"
@@ -40,6 +40,7 @@ new bool:g_bIgnoreFirstRoundStart;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
 new Float:g_flRoundTime;
+new Float:g_fStuckBackTime;
 new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
 new Handle:g_hBlockedSounds;
@@ -138,6 +139,8 @@ public OnConfigsExecuted( )
 	
 #if IS_EXPOSURE_MODE
 	SetConVarFloat( FindConVar( "mp_roundtime" ), 10.0 );
+	SetConVarFloat( FindConVar( "mp_roundtime_defuse" ), 10.0 );
+	SetConVarFloat( FindConVar( "mp_roundtime_hostage" ), 10.0 );
 #endif
 	
 	SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
@@ -321,9 +324,11 @@ public Action:OnCommandStuck( iClient, iArguments )
 		}
 		else if( GetPlayerWeaponSlot( iClient, CS_SLOT_C4 ) == -1 )
 		{
-			g_hTimerStuck = CreateTimer( 5.0, OnTimerGiveBomb, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
+			g_hTimerStuck = CreateTimer( g_fStuckBackTime, OnTimerGiveBomb, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 			
-			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 You will get your bomb in 5 seconds." );
+			ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 You will get your bomb in %.0f seconds.", g_fStuckBackTime );
+			
+			g_fStuckBackTime += 3.0;
 		}
 		else
 		{
@@ -398,6 +403,7 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	}
 	
 	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
+	g_fStuckBackTime = 5.0;
 	
 	if( g_bIgnoreFirstRoundStart )
 	{
@@ -428,7 +434,7 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( g_bInGame[ i ] && IsPlayerBombGamer( i ) )
+		if( g_bInGame[ i ] && IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
 		}
@@ -497,7 +503,6 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	{
 		// TODO
 		PrintToChatAll( "DEBUG: OnTimerIncreaseExposure fired but there is no bomber" );
-		LogError( "OnTimerIncreaseExposure fired but there is no bomber" );
 		
 		return;
 	}
@@ -508,7 +513,15 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	{
 		SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", 0 );
 		
-		CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
+		//CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
+		
+		// Massive hacks all the way across the sky
+		new Float:flDelay = 1.0;
+		new CSRoundEndReason:iReason = CSRoundEnd_TargetBombed;
+		
+		CS_OnTerminateRound( flDelay, iReason );
+		
+		OnRoundFreezeEnd( INVALID_HANDLE, "", false );
 	}
 	else
 	{
@@ -606,7 +619,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			new Float:vPosition[ 3 ];
 			GetClientAbsOrigin( iBomber, vPosition );
 			
-			EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
+			//EmitAmbientSound( "weapons/hegrenade/explode3.wav", vPosition, iBomber, SNDLEVEL_RAIDSIREN );
 			
 			new iExplosion = CreateEntityByName( "env_explosion" );
 			
@@ -898,7 +911,7 @@ EndRound( )
 
 IsPlayerBombGamer( iClient )
 {
-	return IsClientInGame( iClient ) && IsPlayerAlive( iClient ) && GetClientTeam( iClient ) == CS_TEAM_T;
+	return IsClientInGame( iClient ) && /*IsPlayerAlive( iClient ) &&*/ GetClientTeam( iClient ) == CS_TEAM_T;
 }
 
 IsEnoughPlayersToPlay( )
@@ -907,8 +920,7 @@ IsEnoughPlayersToPlay( )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		//if( IsPlayerBombGamer( i ) ) // TODO?
-		if( IsClientInGame( i ) && GetClientTeam( i ) == CS_TEAM_T )
+		if( IsPlayerBombGamer( i ) )
 		{
 			iPlayers++;
 			
@@ -992,7 +1004,7 @@ CheckEnoughPlayers( iClient )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( i != iClient && IsPlayerBombGamer( i ) )
+		if( i != iClient && IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
 		{
 			iAlive++;
 			

@@ -4,7 +4,6 @@
 #include < sdktools >
 #include < cstrike >
 
-#define IS_EXPOSURE_MODE 1 // Do this in a cvar
 #define EXPOSURE_TIME 25
 #define MAX_GRACE_JOIN_TIME 1000.0 // We override game's cvar
 #define BOT_NAME "BombGame Coach"
@@ -18,7 +17,7 @@ public Plugin:myinfo =
 	description = "Good ol' bomb game.",
 	author      = "xPaw",
 	version     = "1.0",
-	url         = "http://xpaw.ru"
+	url         = "https://github.com/xPaw/BombGame"
 };
 
 enum PlayerTag
@@ -32,14 +31,12 @@ new g_iBombHeldTimer[ MAXPLAYERS ];
 new PlayerTag:g_iPlayerTag[ MAXPLAYERS ];
 new bool:g_bInGame[ MAXPLAYERS ];
 new g_bGameRunning;
-new g_iRounds;
 new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
 new bool:g_bIgnoreFirstRoundStart;
 new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
-new Float:g_flRoundTime;
 new Float:g_fStuckBackTime;
 new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
@@ -131,17 +128,7 @@ public OnConfigsExecuted( )
 	PrecacheSound( "weapons/hegrenade/explode3.wav" );
 	PrecacheModel( "sprites/zerogxplode.spr" );
 	
-#if IS_EXPOSURE_MODE
 	g_iPlayerModel = PrecacheModel( "models/player/zombie.mdl" );
-#else
-	g_iPlayerModel = PrecacheModel( "models/player/tm_anarchist_variantd.mdl" );
-#endif
-	
-#if IS_EXPOSURE_MODE
-	SetConVarFloat( FindConVar( "mp_roundtime" ), 10.0 );
-	SetConVarFloat( FindConVar( "mp_roundtime_defuse" ), 10.0 );
-	SetConVarFloat( FindConVar( "mp_roundtime_hostage" ), 10.0 );
-#endif
 	
 	SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
 }
@@ -386,8 +373,6 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
-	SetAllTeamsScore( g_iRounds );
-	
 	g_iLastBomber = 0;
 	g_iStatsBombDropped = 0;
 	g_iStatsBombSwitched = 0;
@@ -402,7 +387,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		InitializeNuke( );
 	}
 	
-	g_flRoundTime = GetEventFloat( hEvent, "timelimit" );
 	g_fStuckBackTime = 5.0;
 	
 	if( g_bIgnoreFirstRoundStart )
@@ -457,13 +441,9 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
-#if IS_EXPOSURE_MODE
 		g_hTimerSound = CreateTimer( 1.0, OnTimerIncreaseExposure, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE );
-#else
-		g_hTimerSound = CreateTimer( g_flRoundTime - 4.0, OnRoundSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
-#endif
 		
-		if( g_iRounds > 0 && iAlive == 2 )
+		if( iAlive == 2 )
 		{
 			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
 			FireEvent( hAnnounce );
@@ -490,11 +470,6 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		SetConVarInt( FindConVar( "mp_restartgame" ), 1 );
 	}
-	
-	g_flRoundTime = 0.0;
-	g_iRounds++;
-	
-	SetAllTeamsScore( g_iRounds );
 }
 
 public Action:OnTimerIncreaseExposure( Handle:hTimer )
@@ -546,20 +521,6 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	}
 }
 
-public Action:OnRoundSoundTimer( Handle:hTimer )
-{
-	g_hTimerSound = CreateTimer( 3.0, OnRoundArmSoundTimer, _, TIMER_FLAG_NO_MAPCHANGE );
-	
-	EmitSoundToAll( "training/countdown.wav" );
-}
-
-public Action:OnRoundArmSoundTimer( Handle:hTimer )
-{
-	g_hTimerSound = INVALID_HANDLE;
-	
-	EmitSoundToAll( "ui/arm_bomb.wav" );
-}
-
 public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 {
 	if( g_hTimerStuck != INVALID_HANDLE )
@@ -597,11 +558,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		decl String:szName[ 32 ];
 		GetClientName( iBomber, szName, sizeof( szName ) );
 		
-#if IS_EXPOSURE_MODE
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure!", szName );
-#else
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s has been left with the bomb!", szName );
-#endif
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times.", g_iStatsBombDropped );
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomber switched\x04 %i\x01 times during this round.", g_iStatsBombSwitched );
@@ -643,9 +600,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-#if IS_EXPOSURE_MODE
 		g_iBombHeldTimer[ i ] = 0;
-#endif
 		
 		if( g_bInGame[ i ] && IsPlayerAlive( i ) )
 		{
@@ -661,7 +616,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		decl String:szName[ 32 ];
 		GetClientName( iAlivePlayer, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!\x01 %i rounds played!", szName, g_iRounds );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!!", szName );
 		
 		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
 		
@@ -830,12 +785,10 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		g_iStatsBombSwitched++;
 		
-#if IS_EXPOSURE_MODE
 		if( g_iBombHeldTimer[ g_iCurrentBomber ] == EXPOSURE_TIME - 1 )
 		{
 			EmitSoundToAll( "ui/arm_bomb.wav", g_iCurrentBomber );
 		}
-#endif
 	}
 	else
 	{
@@ -847,7 +800,6 @@ public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 {
 	g_iStatsBombDropped++;
 	
-#if IS_EXPOSURE_MODE
 	new iEntity = GetClientOfUserId( GetEventInt( hEvent, "entindex" ) );
 	
 	if( IsValidEdict( iEntity ) )
@@ -855,7 +807,6 @@ public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		SetEntityRenderColor( iEntity, 241, 196, 15, 255 );
 		SetEntityRenderMode( iEntity, RENDER_TRANSCOLOR );
 	}
-#endif
 }
 
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -936,7 +887,6 @@ IsEnoughPlayersToPlay( )
 
 StartGame( )
 {
-	g_iRounds = 0;
 	g_bGameRunning = true;
 	
 	for( new i = 1; i <= MaxClients; i++ )
@@ -965,7 +915,6 @@ ResetGame( )
 	
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
-	g_iRounds = 0;
 }
 
 SetPlayerTag( iClient, PlayerTag:iNewTag )
@@ -1073,15 +1022,6 @@ RemoveBomb( )
 	{
 		AcceptEntityInput( iEntity, "kill" );
 	}
-}
-
-SetAllTeamsScore( iScore )
-{
-	CS_SetTeamScore( CS_TEAM_CT, iScore );
-	SetTeamScore( CS_TEAM_CT, iScore );
-	
-	CS_SetTeamScore( CS_TEAM_T, iScore );
-	SetTeamScore( CS_TEAM_T, iScore );
 }
 
 InitializeNuke( )

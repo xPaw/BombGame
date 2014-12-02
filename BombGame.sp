@@ -34,7 +34,6 @@ new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
 new bool:g_bIgnoreFirstRoundStart;
-new bool:g_bMapHasHostages;
 new bool:g_bIsNuke;
 new Float:g_fStuckBackTime;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -193,7 +192,6 @@ public OnMapStart( )
 	GetCurrentMap( szMap, sizeof( szMap ) );
 	
 	g_bIsNuke = StrEqual( szMap, "de_nuke", false );
-	g_bMapHasHostages = FindEntityByClassname( -1, "hostage_entity" ) > -1;
 	
 	if( g_bIsNuke )
 	{
@@ -374,11 +372,6 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	g_iLastBomber = 0;
 	g_iStatsBombDropped = 0;
 	g_iStatsBombSwitched = 0;
-	
-	if( g_bMapHasHostages )
-	{
-		RemoveHostages( );
-	}
 	
 	if( g_bIsNuke )
 	{
@@ -987,16 +980,6 @@ HideRadar( iClient )
 ShowRadar( iClient )
 {
 	SetEntProp( iClient, Prop_Send, "m_iHideHUD", GetEntProp( iClient, Prop_Send, "m_iHideHUD" ) & ~HIDEHUD_RADAR );
-}
-
-RemoveHostages( )
-{
-	new iEntity = -1;
-	
-	while( ( iEntity = FindEntityByClassname( iEntity, "hostage_entity" ) ) != -1 )
-	{
-		AcceptEntityInput( iEntity, "kill" );
-	}
 }
 
 RemoveBomb( )

@@ -29,7 +29,6 @@ enum PlayerTag
 
 new g_iBombHeldTimer[ MAXPLAYERS ];
 new PlayerTag:g_iPlayerTag[ MAXPLAYERS ];
-new bool:g_bInGame[ MAXPLAYERS ];
 new g_bGameRunning;
 new g_iFakeClient;
 new g_iLastBomber;
@@ -237,7 +236,6 @@ public OnMapEnd( )
 
 public OnClientDisconnect( iClient )
 {
-	g_bInGame[ iClient ] = false;
 	g_iPlayerTag[ iClient ] = PlayerTag_None;
 	
 	if( g_iFakeClient == iClient )
@@ -414,19 +412,53 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 	
 	SetConVarFloat( g_hCvarGraceJoinTime, 0.0 ); // We don't want to allow late joins
 	
-	new iPlayers[ MaxClients ], iAlive, i;
+	GiveBombStuff( );
+}
+
+GiveBombStuff( iBomber = 0 )
+{
+	new iPlayers[ MaxClients ], iAlive, i, iBestBomberCandidate, Float:flHighestDistance, Float:flDistance, bool:bMidGame = iBomber > 0;
+	
+	new Float:entityVec[3];
+	new Float:targetVec[3];
+	
+	if( bMidGame )
+	{
+		GetEntPropVector( iBomber, Prop_Data, "m_vecOrigin", targetVec );
+	}
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( g_bInGame[ i ] && IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
+		if( IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
+			
+			if( bMidGame )
+			{
+				CS_SetClientContributionScore( i, CS_GetClientContributionScore( i ) + 1 );
+				
+				GetEntPropVector( i, Prop_Data, "m_vecOrigin", entityVec );
+				
+				flDistance = GetVectorDistance( entityVec, targetVec );
+				
+				if( flDistance > flHighestDistance )
+				{
+					flHighestDistance = flDistance;
+					
+					iBestBomberCandidate = i;
+				}
+			}
 		}
 	}
 	
 	if( iAlive > 1 )
 	{
-		g_iCurrentBomber = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
+		if( iBestBomberCandidate == 0 )
+		{
+			iBestBomberCandidate = iPlayers[ GetRandomInt( 0, iAlive - 1 ) ];
+		}
+		
+		g_iCurrentBomber = iBestBomberCandidate;
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
@@ -435,7 +467,14 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 spawned with the bomb!", szName );
+		if( bMidGame )
+		{
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 now has the bomb for being the furthest player!", szName );
+		}
+		else
+		{
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 spawned with the bomb!", szName );
+		}
 		
 		MakeBomber( g_iCurrentBomber );
 		
@@ -460,13 +499,19 @@ public OnRoundFreezeEnd( Handle:hEvent, const String:szActionName[], bool:bDontB
 		
 		CS_SetMVPCount( iAlive, CS_GetMVPCount( iAlive ) + 1 );
 		
+		CS_SetClientContributionScore( iAlive, CS_GetClientContributionScore( iAlive ) + 10 );
+		
+		new Handle:hLeader = CreateEvent( "round_mvp" );
+		SetEventInt( hLeader, "userid", GetClientUserId( iAlive ) );
+		FireEvent( hLeader );
+		
 		ResetGame( );
+		
+		CS_TerminateRound( 6.5, CSRoundEnd_TargetBombed );
 	}
 	else
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 Something magical happened, resetting the game." );
-		
-		ResetGame( );
 		
 		SetConVarInt( FindConVar( "mp_restartgame" ), 1 );
 	}
@@ -486,17 +531,13 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	
 	if( iTime >= EXPOSURE_TIME )
 	{
-		SetEntProp( g_iCurrentBomber, Prop_Send, "m_iHealth", 0 );
+		new iBomber = g_iCurrentBomber;
 		
-		//CS_TerminateRound( 5.0, CSRoundEnd_TargetBombed );
+		SetEntProp( iBomber, Prop_Send, "m_iHealth", 0 );
 		
-		// Massive hacks all the way across the sky
-		new Float:flDelay = 1.0;
-		new CSRoundEndReason:iReason = CSRoundEnd_TargetBombed;
+		TerminateRound( );
 		
-		CS_OnTerminateRound( flDelay, iReason );
-		
-		OnRoundFreezeEnd( INVALID_HANDLE, "", false );
+		GiveBombStuff( iBomber );
 	}
 	else
 	{
@@ -521,10 +562,12 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	}
 }
 
-public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
+public TerminateRound( )
 {
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
+		g_fStuckBackTime = 5.0;
+		
 		KillTimer( g_hTimerStuck );
 		
 		g_hTimerStuck = INVALID_HANDLE;
@@ -535,18 +578,6 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		KillTimer( g_hTimerSound );
 		
 		g_hTimerSound = INVALID_HANDLE;
-	}
-	
-	if( !g_bGameRunning )
-	{
-		if( iReason == CSRoundEnd_TargetSaved )
-		{
-			iReason = CSRoundEnd_TargetBombed;
-			
-			return Plugin_Changed;
-		}
-		
-		return Plugin_Continue;
 	}
 	
 	new iBomber = g_iCurrentBomber;
@@ -560,12 +591,10 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s died from exposure!", szName );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times.", g_iStatsBombDropped );
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomber switched\x04 %i\x01 times during this round.", g_iStatsBombSwitched );
+		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomb was dropped\x04 %i\x01 times.", g_iStatsBombDropped );
+		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Bomber switched\x04 %i\x01 times during this round.", g_iStatsBombSwitched );
 		
 		g_iLastBomber = iBomber;
-		
-		g_bInGame[ iBomber ] = false;
 		
 		if( IsPlayerAlive( iBomber ) )
 		{
@@ -583,7 +612,7 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 			if( iExplosion != -1 )
 			{
 				DispatchKeyValueVector( iExplosion, "Origin", vPosition );
-				DispatchKeyValue( iExplosion, "iMagnitude", "0" );
+				DispatchKeyValue( iExplosion, "iMagnitude", "500" );
 				DispatchKeyValue( iExplosion, "spawnflags", "128" );
 				DispatchSpawn( iExplosion );
 				AcceptEntityInput( iExplosion, "Explode" );
@@ -596,46 +625,13 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	
 	RemoveBomb( );
 	
-	new iPlayers, i, iAlivePlayer;
-	
-	for( i = 1; i <= MaxClients; i++ )
+	for( new i = 1; i <= MaxClients; i++ )
 	{
-		g_iBombHeldTimer[ i ] = 0;
-		
-		if( g_bInGame[ i ] && IsPlayerAlive( i ) )
+		if( IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
 		{
-			iAlivePlayer = i;
-			iPlayers++;
-			
 			CS_SetClientContributionScore( i, CS_GetClientContributionScore( i ) + 1 );
 		}
 	}
-	
-	if( iPlayers == 1 )
-	{
-		decl String:szName[ 32 ];
-		GetClientName( iAlivePlayer, szName, sizeof( szName ) );
-		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x04 %s won the bomb game!!", szName );
-		
-		CS_SetMVPCount( iAlivePlayer, CS_GetMVPCount( iAlivePlayer ) + 1 );
-		
-		new Handle:hLeader = CreateEvent( "round_mvp" );
-		SetEventInt( hLeader, "userid", GetClientUserId( iAlivePlayer ) );
-		FireEvent( hLeader );
-		
-		ResetGame( );
-		
-		flDelay = 6.5;
-		iReason = CSRoundEnd_TerroristWin;
-	}
-	else if( iReason == CSRoundEnd_TargetSaved )
-	{
-		flDelay = 5.0;
-		iReason = CSRoundEnd_TargetBombed;
-	}
-	
-	return Plugin_Changed;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -653,18 +649,6 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		SetEntProp( iClient, Prop_Data, "m_takedamage", 0, 1 );
 		SetEntProp( iClient, Prop_Data, "m_fEffects", GetEntProp( g_iFakeClient, Prop_Data, "m_fEffects" ) | 0x020 );
 		TeleportEntity( iClient, Float:{ 0.0, 0.0, -99999.0 }, NULL_VECTOR, NULL_VECTOR );
-		
-		return;
-	}
-	
-	if( g_bGameRunning && !g_bInGame[ iClient ] )
-	{
-		PrintToChat( iClient, " \x01\x0B\x04[BombGame]\x01 You can't play this round!" );
-		
-		ForcePlayerSuicide( iClient );
-		
-		SetEntProp( iClient, Prop_Data, "m_iFrags", 0 );
-		SetEntProp( iClient, Prop_Data, "m_iDeaths", GetEntProp( iClient, Prop_Data, "m_iDeaths" ) - 1 );
 		
 		return;
 	}
@@ -704,8 +688,6 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		g_iCurrentBomber = 0;
 		g_iLastBomber = iClient;
 		
-		g_bInGame[ iClient ] = false;
-		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
@@ -713,7 +695,9 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		SetPlayerTag( iClient, PlayerTag_None );
 		
-		EndRound( );
+		TerminateRound( );
+		
+		GiveBombStuff( iClient );
 	}
 	else
 	{
@@ -729,20 +713,13 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			}
 		}
 		
-		if( g_bInGame[ iClient ] )
-		{
-			g_bInGame[ iClient ] = false;
-			
-			decl String:szName[ 32 ];
-			GetClientName( iClient, szName, sizeof( szName ) );
-			
-			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
-			
-			SetPlayerTag( iClient, PlayerTag_None );
-		}
+		decl String:szName[ 32 ];
+		GetClientName( iClient, szName, sizeof( szName ) );
+		
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
+		
+		SetPlayerTag( iClient, PlayerTag_None );
 	}
-	
-	ClientCommand( iClient, "playgamesound Music.StopAllMusic" ); // TODO: This gets blocked clientside
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -836,11 +813,7 @@ public OnRestartGameCvar( Handle:hCvar, const String:szOldValue[ ], const String
 	{
 		ResetGame( );
 		
-		// Massive hacks all the way across the sky
-		new Float:flDelay = 10.0;
-		new CSRoundEndReason:iReason = CSRoundEnd_GameStart;
-		
-		CS_OnTerminateRound( flDelay, iReason );
+		TerminateRound( );
 	}
 }
 
@@ -893,8 +866,6 @@ StartGame( )
 	{
 		if( IsPlayerBombGamer( i ) )
 		{
-			g_bInGame[ i ] = true;
-			
 			SetPlayerTag( i, PlayerTag_Alive );
 		}
 	}
@@ -902,9 +873,22 @@ StartGame( )
 
 ResetGame( )
 {
+	if( g_hTimerStuck != INVALID_HANDLE )
+	{
+		KillTimer( g_hTimerStuck );
+		
+		g_hTimerStuck = INVALID_HANDLE;
+	}
+	
+	if( g_hTimerSound != INVALID_HANDLE )
+	{
+		KillTimer( g_hTimerSound );
+		
+		g_hTimerSound = INVALID_HANDLE;
+	}
+	
 	for( new i = 1; i <= MaxClients; i++ )
 	{
-		g_bInGame[ i ] = false;
 		g_iBombHeldTimer[ i ] = 0;
 		
 		if( i != g_iFakeClient )
@@ -915,6 +899,7 @@ ResetGame( )
 	
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
+	g_fStuckBackTime = 5.0;
 }
 
 SetPlayerTag( iClient, PlayerTag:iNewTag )
@@ -991,7 +976,7 @@ CheckEnoughPlayers( iClient )
 	
 	ResetGame( );
 	
-	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
+	EndRound( );
 }
 
 HideRadar( iClient )

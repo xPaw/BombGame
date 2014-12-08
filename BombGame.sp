@@ -706,10 +706,10 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 			}
 		}
 		
-		decl String:szName[ 32 ];
-		GetClientName( iClient, szName, sizeof( szName ) );
+		//decl String:szName[ 32 ];
+		//GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
+		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
 		
 		SetPlayerTag( iClient, PlayerTag_None );
 	}

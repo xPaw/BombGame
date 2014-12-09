@@ -27,14 +27,14 @@
 			"name"			"mg_bombgame"
 			"maps"
 			{
-				"workshop/254174872/bombgame_course"		""
-				"workshop/254180479/bombgame_nuke"		""
-				"mg_de_dust2"		""
-				"mg_de_dust"		""
-				"mg_de_mirage"		""
-				"mg_de_nuke"		""
-				"mg_de_overpass"	""
-				"mg_cs_assault"		""
+				"workshop\254174872\bombgame_course"	""
+				"workshop\254180479\bombgame_nuke"		""
+				"de_dust2"		""
+				"de_dust"		""
+				"de_mirage"		""
+				"de_nuke"		""
+				"de_overpass"	""
+				"cs_assault"	""
 			}
 		}
 	}

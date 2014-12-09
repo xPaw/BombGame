@@ -34,6 +34,7 @@ new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
 new bool:g_bIsNuke;
+new bool:g_bFixTerminateRound;
 new Float:g_fStuckBackTime;
 new Handle:g_hTimerSound = INVALID_HANDLE;
 new Handle:g_hTimerStuck = INVALID_HANDLE;
@@ -101,13 +102,13 @@ public OnPluginEnd( )
 		SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
 	}
 	
-	for( new i = 1; i <= MaxClients; i++ )
+	/*for( new i = 1; i <= MaxClients; i++ )
 	{
 		if( IsClientInGame( i ) )
 		{
 			CS_SetClientClanTag( i, "" );
 		}
-	}
+	}*/
 }
 
 public OnConfigsExecuted( )
@@ -343,7 +344,7 @@ public Action:OnCommandStart( iClient, iArguments )
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
 		
-		CS_TerminateRound( 0.5, CSRoundEnd_Draw );
+		CS_TerminateRound( 0.5, CSRoundEnd_Draw, true );
 		
 		StartGame( );
 	}
@@ -469,6 +470,9 @@ GiveBombStuff( iBomber = 0 )
 		if( bMidGame )
 		{
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 now has the bomb for being the furthest player!", szName );
+			
+			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
+			FireEvent( hAnnounce );
 		}
 		else
 		{
@@ -480,12 +484,6 @@ GiveBombStuff( iBomber = 0 )
 		EmitSoundToClient( g_iCurrentBomber, "ui/beep22.wav" );
 		
 		g_hTimerSound = CreateTimer( 1.0, OnTimerIncreaseExposure, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE );
-		
-		if( iAlive == 2 )
-		{
-			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
-			FireEvent( hAnnounce );
-		}
 	}
 	else if( iAlive == 1 )
 	{
@@ -506,7 +504,9 @@ GiveBombStuff( iBomber = 0 )
 		
 		ResetGame( );
 		
-		CS_TerminateRound( 6.5, CSRoundEnd_TargetBombed );
+		g_bFixTerminateRound = true;
+		
+		ForcePlayerSuicide( g_iFakeClient );
 	}
 	else
 	{
@@ -522,6 +522,8 @@ public Action:OnTimerIncreaseExposure( Handle:hTimer )
 	{
 		// TODO
 		PrintToChatAll( "DEBUG: OnTimerIncreaseExposure fired but there is no bomber" );
+		
+		ResetGame( );
 		
 		return;
 	}
@@ -631,6 +633,22 @@ public TerminateRound( )
 	}
 	
 	g_fStuckBackTime = 5.0;
+}
+
+public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
+{
+	if( g_bFixTerminateRound )
+	{
+		g_bFixTerminateRound = false;
+		
+		//flDelay = 6.5;
+		
+		iReason = CSRoundEnd_TargetBombed;
+		
+		return Plugin_Changed;
+	}
+	
+	return Plugin_Stop;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -829,7 +847,7 @@ MakeBomber( iClient )
 
 EndRound( )
 {
-	CS_TerminateRound( 3.0, CSRoundEnd_Draw );
+	CS_TerminateRound( 3.0, CSRoundEnd_Draw, true );
 }
 
 IsPlayerBombGamer( iClient )
@@ -913,7 +931,7 @@ SetPlayerTag( iClient, PlayerTag:iNewTag )
 
 UpdatePlayerTag( iClient )
 {
-	if( !IsClientInGame( iClient ) )
+	/*if( !IsClientInGame( iClient ) )
 	{
 		return;
 	}
@@ -923,7 +941,7 @@ UpdatePlayerTag( iClient )
 		case PlayerTag_None : CS_SetClientClanTag( iClient, "" );
 		case PlayerTag_Bomb : CS_SetClientClanTag( iClient, "BOMB" );
 		case PlayerTag_Alive: CS_SetClientClanTag( iClient, "❤" );
-	}
+	}*/
 }
 
 CheckEnoughPlayers( iClient )

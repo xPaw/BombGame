@@ -33,7 +33,6 @@ new g_bGameRunning;
 new g_iFakeClient;
 new g_iLastBomber;
 new g_iCurrentBomber;
-new bool:g_bIgnoreFirstRoundStart;
 new bool:g_bIsNuke;
 new Float:g_fStuckBackTime;
 new Handle:g_hTimerSound = INVALID_HANDLE;
@@ -186,8 +185,6 @@ public OnMapStart( )
 		SetEntProp( iEntity, Prop_Send, "m_fEffects", 32 );
 	}
 	
-	g_bIgnoreFirstRoundStart = true;
-	
 	new String:szMap[ 32 ];
 	GetCurrentMap( szMap, sizeof( szMap ) );
 	
@@ -201,6 +198,12 @@ public OnMapStart( )
 	CreateTimer( 1.0, OnTimerCreateBot, _, TIMER_FLAG_NO_MAPCHANGE );
 	
 	SetConVarFloat( g_hCvarGraceJoinTime, MAX_GRACE_JOIN_TIME );
+	
+	/** begin insane warmup hacks **/
+	ServerCommand( "mp_do_warmup_period 1" );
+	ServerCommand( "mp_warmuptime 25" );
+	ServerCommand( "mp_warmup_start" );
+	ServerCommand( "mp_warmup_start" );
 }
 
 public Action:OnTimerCreateBot( Handle:hTimer )
@@ -332,11 +335,13 @@ public Action:OnCommandStart( iClient, iArguments )
 	{
 		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Not enough players to start the game." );
 	}
+	else if( GameRules_GetProp( "m_bWarmupPeriod" ) )
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Warmup period." );
+	}
 	else
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
-		
-		g_bIgnoreFirstRoundStart = false;
 		
 		CS_TerminateRound( 0.5, CSRoundEnd_Draw );
 		
@@ -380,17 +385,18 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	g_fStuckBackTime = 5.0;
 	
-	if( g_bIgnoreFirstRoundStart )
+	if( !g_bGameRunning && !GameRules_GetProp( "m_bWarmupPeriod" ) )
 	{
-		g_bIgnoreFirstRoundStart = false;
-		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 If you want to start the game manually, say\x02 /start\x01" );
-	}
-	else if( !g_bGameRunning && IsEnoughPlayersToPlay( ) )
-	{
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
-		
-		StartGame( );
+		if( IsEnoughPlayersToPlay( ) )
+		{
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
+			
+			StartGame( );
+		}
+		else
+		{
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Not enough players to start the game, once there are enough players you can say\x02 /start\x01" );
+		}
 	}
 }
 
@@ -559,8 +565,6 @@ public TerminateRound( )
 {
 	if( g_hTimerStuck != INVALID_HANDLE )
 	{
-		g_fStuckBackTime = 5.0;
-		
 		KillTimer( g_hTimerStuck );
 		
 		g_hTimerStuck = INVALID_HANDLE;
@@ -625,6 +629,8 @@ public TerminateRound( )
 			CS_SetClientContributionScore( i, CS_GetClientContributionScore( i ) + 1 );
 		}
 	}
+	
+	g_fStuckBackTime = 5.0;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )

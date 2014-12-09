@@ -1,0 +1,41 @@
+"GameModes.txt"
+{
+	"gameTypes"
+	{
+		"classic"
+		{
+			"gameModes"
+			{
+				"casual"
+				{
+					"maxplayers"	"16"
+					
+					"exec"
+					{
+						"exec" "server.cfg"
+						"exec" "BombGame.cfg"
+					}
+				}
+			}	
+		}
+	}
+	
+	"mapgroups"
+	{
+		"mg_bombgame"
+		{
+			"name"			"mg_bombgame"
+			"maps"
+			{
+				"workshop/254174872/bombgame_course"		""
+				"workshop/254180479/bombgame_nuke"		""
+				"mg_de_dust2"		""
+				"mg_de_dust"		""
+				"mg_de_mirage"		""
+				"mg_de_nuke"		""
+				"mg_de_overpass"	""
+				"mg_cs_assault"		""
+			}
+		}
+	}
+}

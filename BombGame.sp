@@ -20,15 +20,7 @@ public Plugin:myinfo =
 	url         = "https://github.com/xPaw/BombGame"
 };
 
-enum PlayerTag
-{
-	PlayerTag_None = 0,
-	PlayerTag_Bomb,
-	PlayerTag_Alive
-};
-
 new g_iBombHeldTimer[ MAXPLAYERS ];
-new PlayerTag:g_iPlayerTag[ MAXPLAYERS ];
 new g_bGameRunning;
 new g_iFakeClient;
 new g_iLastBomber;
@@ -82,6 +74,8 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
 	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
+	
+	HookUserMessage( GetUserMessageId( "TextMsg" ), OnUserMessage, true );
 	
 	HookConVarChange( FindConVar( "mp_restartgame" ), OnRestartGameCvar );
 	
@@ -238,8 +232,6 @@ public OnMapEnd( )
 
 public OnClientDisconnect( iClient )
 {
-	g_iPlayerTag[ iClient ] = PlayerTag_None;
-	
 	if( g_iFakeClient == iClient )
 	{
 		g_iFakeClient = 0;
@@ -256,22 +248,14 @@ public OnClientDisconnect( iClient )
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s left the game while being the bomber.", szName );
 		
-		EndRound( );
+		TerminateRound( );
+		
+		GiveBombStuff( iClient );
 	}
 	else
 	{
 		CheckEnoughPlayers( iClient );
 	}
-}
-
-public OnClientPutInServer( iClient )
-{
-	UpdatePlayerTag( iClient );
-}
-
-public OnClientSettingsChanged( iClient )
-{
-	UpdatePlayerTag( iClient );
 }
 
 public Action:OnCommandCallVote( iClient, const String:szCommand[ ], iArguments )
@@ -332,19 +316,19 @@ public Action:OnCommandStart( iClient, iArguments )
 	{
 		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 The game is already running." );
 	}
+	else if( IsWarmupPeriod( ) || IsFreezePeriod( ) )
+	{
+		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Can't start the game in warmup period." );
+	}
 	else if( !IsEnoughPlayersToPlay( ) )
 	{
 		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Not enough players to start the game." );
-	}
-	else if( GameRules_GetProp( "m_bWarmupPeriod" ) )
-	{
-		ReplyToCommand( iClient, " \x01\x0B\x04[BombGame]\x01 Warmup period." );
 	}
 	else
 	{
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game by player request." );
 		
-		CS_TerminateRound( 0.5, CSRoundEnd_Draw, true );
+		CS_TerminateRound( 0.1, CSRoundEnd_Draw, true );
 		
 		StartGame( );
 	}
@@ -373,6 +357,20 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 	return Plugin_Handled;
 }
 
+
+public Action:OnUserMessage( UserMsg:MsgId, Handle:hProtobuf, const iPlayers[], iNumPlayers, bool:bReliable, bool:bInit )
+{
+	decl String:szText[ 32 ];
+	PbReadString( hProtobuf, "params", szText, sizeof( szText ), 0 );
+	
+	if( StrEqual( szText, "#SFUI_Notice_YouDroppedWeapon" ) || StrEqual( szText, "#SFUI_Notice_Got_Bomb" ) )
+	{
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
+}
+
 public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iLastBomber = 0;
@@ -386,11 +384,12 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	g_fStuckBackTime = 5.0;
 	
-	if( !g_bGameRunning && !GameRules_GetProp( "m_bWarmupPeriod" ) )
+	if( !g_bGameRunning && !IsWarmupPeriod() )
 	{
 		if( IsEnoughPlayersToPlay( ) )
 		{
-			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information. Say\x02 /stuck\x01 if your bomb is inaccessible." );
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information." );
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Say\x02 /stuck\x01 if your bomb is inaccessible." );
 			
 			StartGame( );
 		}
@@ -460,10 +459,6 @@ GiveBombStuff( iBomber = 0 )
 		
 		g_iCurrentBomber = iBestBomberCandidate;
 		
-		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
-		
-		FakeClientCommand( g_iCurrentBomber, "use weapon_c4" );
-		
 		decl String:szName[ 32 ];
 		GetClientName( g_iCurrentBomber, szName, sizeof( szName ) );
 		
@@ -471,13 +466,22 @@ GiveBombStuff( iBomber = 0 )
 		{
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 now has the bomb for being the furthest player!", szName );
 			
-			new Handle:hAnnounce = CreateEvent( "round_announce_final" );
-			FireEvent( hAnnounce );
+			if( iAlive == 2 )
+			{
+				new Handle:hAnnounce = CreateEvent( "round_announce_match_point" ); // round_announce_final
+				FireEvent( hAnnounce );
+			}
 		}
 		else
 		{
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 spawned with the bomb!", szName );
 		}
+		
+		PrintCenterTextAll( "%s now has the bomb!", szName );
+		
+		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
+		
+		FakeClientCommand( g_iCurrentBomber, "use weapon_c4" );
 		
 		MakeBomber( g_iCurrentBomber );
 		
@@ -618,8 +622,6 @@ public TerminateRound( )
 				AcceptEntityInput( iExplosion, "Kill" );
 			}
 		}
-		
-		SetPlayerTag( iBomber, PlayerTag_None );
 	}
 	
 	RemoveBomb( );
@@ -648,7 +650,9 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 		return Plugin_Changed;
 	}
 	
-	return Plugin_Stop;
+	GameRules_SetProp( "m_totalRoundsPlayed", 0 );
+	
+	return Plugin_Continue;
 }
 
 public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -669,6 +673,16 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		return;
 	}
+	
+	if( !g_bGameRunning && !IsWarmupPeriod( ) && !IsFreezePeriod( ) && IsEnoughPlayersToPlay( ) )
+	{
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game." );
+		
+		CS_TerminateRound( 0.1, CSRoundEnd_Draw, true );
+	}
+	
+	PrintToChat( iClient, "m_numGlobalGiftsGiven: %d - m_numGlobalGifters: %d - m_numGlobalGiftsPeriodSeconds: %d",
+		GameRules_GetProp( "m_numGlobalGiftsGiven" ), GameRules_GetProp( "m_numGlobalGifters" ), GameRules_GetProp( "m_numGlobalGiftsPeriodSeconds" ) );
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 }
@@ -710,8 +724,6 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s suicided while being the bomber.", szName );
 		
-		SetPlayerTag( iClient, PlayerTag_None );
-		
 		TerminateRound( );
 		
 		GiveBombStuff( iClient );
@@ -734,8 +746,6 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		//GetClientName( iClient, szName, sizeof( szName ) );
 		
 		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
-		
-		SetPlayerTag( iClient, PlayerTag_None );
 	}
 }
 
@@ -762,8 +772,6 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 			HideRadar( g_iCurrentBomber );
 			
 			SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
-			
-			SetPlayerTag( g_iCurrentBomber, PlayerTag_Alive );
 		}
 		
 		g_iCurrentBomber = iClient;
@@ -773,7 +781,9 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
 		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 has picked up the bomb!", szName );
+		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 has picked up the bomb!", szName );
+		
+		PrintCenterTextAll( "%s now has the bomb!", szName );
 		
 		EmitSoundToAll( "buttons/blip2.wav", iClient );
 		
@@ -841,8 +851,6 @@ MakeBomber( iClient )
 	g_iPreviousPlayerModel = GetEntProp( iClient, Prop_Data, "m_nModelIndex", 2 );
 	
 	SetEntProp( iClient, Prop_Data, "m_nModelIndex", g_iPlayerModel, 2 );
-	
-	SetPlayerTag( iClient, PlayerTag_Bomb );
 }
 
 EndRound( )
@@ -853,6 +861,16 @@ EndRound( )
 IsPlayerBombGamer( iClient )
 {
 	return IsClientInGame( iClient ) && /*IsPlayerAlive( iClient ) &&*/ GetClientTeam( iClient ) == CS_TEAM_T;
+}
+
+IsWarmupPeriod( )
+{
+	return GameRules_GetProp( "m_bWarmupPeriod" );
+}
+
+IsFreezePeriod( )
+{
+	return GameRules_GetProp( "m_bFreezePeriod" );
 }
 
 IsEnoughPlayersToPlay( )
@@ -878,14 +896,6 @@ IsEnoughPlayersToPlay( )
 StartGame( )
 {
 	g_bGameRunning = true;
-	
-	for( new i = 1; i <= MaxClients; i++ )
-	{
-		if( IsPlayerBombGamer( i ) )
-		{
-			SetPlayerTag( i, PlayerTag_Alive );
-		}
-	}
 }
 
 ResetGame( )
@@ -907,41 +917,11 @@ ResetGame( )
 	for( new i = 1; i <= MaxClients; i++ )
 	{
 		g_iBombHeldTimer[ i ] = 0;
-		
-		if( i != g_iFakeClient )
-		{
-			SetPlayerTag( i, PlayerTag_None );
-		}
 	}
 	
 	g_bGameRunning = false;
 	g_iCurrentBomber = 0;
 	g_fStuckBackTime = 5.0;
-}
-
-SetPlayerTag( iClient, PlayerTag:iNewTag )
-{
-	if( g_iPlayerTag[ iClient ] != iNewTag )
-	{
-		g_iPlayerTag[ iClient ] = iNewTag;
-		
-		UpdatePlayerTag( iClient );
-	}
-}
-
-UpdatePlayerTag( iClient )
-{
-	/*if( !IsClientInGame( iClient ) )
-	{
-		return;
-	}
-	
-	switch( g_iPlayerTag[ iClient ] )
-	{
-		case PlayerTag_None : CS_SetClientClanTag( iClient, "" );
-		case PlayerTag_Bomb : CS_SetClientClanTag( iClient, "BOMB" );
-		case PlayerTag_Alive: CS_SetClientClanTag( iClient, "❤" );
-	}*/
 }
 
 CheckEnoughPlayers( iClient )

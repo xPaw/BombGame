@@ -8,7 +8,15 @@
 			{
 				"casual"
 				{
+					"nameID"			"#csgo_instr_explain_bomb_carrier"
+					"descID"			"#csgo_instr_explain_bomb_carrier"
+					"descID_List"     	"#csgo_instr_explain_bomb_carrier"
 					"maxplayers"	"16"
+					
+					"ui"
+					{
+						//
+					}
 					
 					"exec"
 					{
@@ -27,8 +35,6 @@
 			"name"			"mg_bombgame"
 			"maps"
 			{
-				"workshop\254174872\bombgame_course"	""
-				"workshop\254180479\bombgame_nuke"		""
 				"de_dust2"		""
 				"de_dust"		""
 				"de_mirage"		""

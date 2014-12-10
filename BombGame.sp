@@ -63,6 +63,7 @@ public OnPluginStart( )
 	
 	RegConsoleCmd( "sm_help", OnCommandHelp, "Display helpful message about the bomb game" );
 	RegConsoleCmd( "sm_stuck", OnCommandStuck, "Get the bomb back if you're the bomber" );
+	RegConsoleCmd( "sm_s", OnCommandStuck, "Get the bomb back if you're the bomber" );
 	RegConsoleCmd( "sm_start", OnCommandStart, "Start the game" );
 	
 	HookEvent( "round_start",      OnRoundStart );
@@ -242,6 +243,7 @@ public OnClientDisconnect( iClient )
 	if( iClient == g_iCurrentBomber )
 	{
 		g_iCurrentBomber = 0;
+		g_iLastBomber = iClient;
 		
 		decl String:szName[ 32 ];
 		GetClientName( iClient, szName, sizeof( szName ) );
@@ -254,7 +256,11 @@ public OnClientDisconnect( iClient )
 	}
 	else
 	{
-		CheckEnoughPlayers( iClient );
+		// TODO: useless check??
+		if( g_iLastBomber != iClient )
+		{
+			CheckEnoughPlayers( iClient );
+		}
 	}
 }
 
@@ -360,10 +366,12 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 
 public Action:OnUserMessage( UserMsg:MsgId, Handle:hProtobuf, const iPlayers[], iNumPlayers, bool:bReliable, bool:bInit )
 {
-	decl String:szText[ 32 ];
+	decl String:szText[ 36 ];
 	PbReadString( hProtobuf, "params", szText, sizeof( szText ), 0 );
 	
-	if( StrEqual( szText, "#SFUI_Notice_YouDroppedWeapon" ) || StrEqual( szText, "#SFUI_Notice_Got_Bomb" ) )
+	if( StrEqual( szText, "#SFUI_Notice_YouDroppedWeapon" )
+	||  StrEqual( szText, "#SFUI_Notice_Got_Bomb" )
+	||  StrEqual( szText, "#SFUI_Notice_C4_Plant_At_Bomb_Spot" ) )
 	{
 		return Plugin_Handled;
 	}
@@ -428,7 +436,7 @@ GiveBombStuff( iBomber = 0 )
 	
 	for( i = 1; i <= MaxClients; i++ )
 	{
-		if( IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
+		if( i != iBomber && IsPlayerBombGamer( i ) && IsPlayerAlive( i ) )
 		{
 			iPlayers[ iAlive++ ] = i;
 			
@@ -643,14 +651,10 @@ public Action:CS_OnTerminateRound( &Float:flDelay, &CSRoundEndReason:iReason )
 	{
 		g_bFixTerminateRound = false;
 		
-		//flDelay = 6.5;
-		
 		iReason = CSRoundEnd_TargetBombed;
 		
 		return Plugin_Changed;
 	}
-	
-	GameRules_SetProp( "m_totalRoundsPlayed", 0 );
 	
 	return Plugin_Continue;
 }
@@ -676,13 +680,10 @@ public OnPlayerSpawn( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	
 	if( !g_bGameRunning && !IsWarmupPeriod( ) && !IsFreezePeriod( ) && IsEnoughPlayersToPlay( ) )
 	{
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Starting the game." );
+		PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Enough players joined, starting the game." );
 		
 		CS_TerminateRound( 0.1, CSRoundEnd_Draw, true );
 	}
-	
-	PrintToChat( iClient, "m_numGlobalGiftsGiven: %d - m_numGlobalGifters: %d - m_numGlobalGiftsPeriodSeconds: %d",
-		GameRules_GetProp( "m_numGlobalGiftsGiven" ), GameRules_GetProp( "m_numGlobalGifters" ), GameRules_GetProp( "m_numGlobalGiftsPeriodSeconds" ) );
 	
 	CreateTimer( 0.0, OnTimerHideRadar, GetClientSerial( iClient ), TIMER_FLAG_NO_MAPCHANGE );
 }
@@ -730,16 +731,10 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 	}
 	else
 	{
+		// TODO: useless check??
 		if( g_iLastBomber != iClient )
 		{
 			CheckEnoughPlayers( iClient );
-			
-			new iRagdoll = GetEntPropEnt( iClient, Prop_Send, "m_hRagdoll" );
-			
-			if( iRagdoll > 0 )
-			{
-				AcceptEntityInput( iRagdoll, "kill" );
-			}
 		}
 		
 		//decl String:szName[ 32 ];
@@ -955,21 +950,10 @@ CheckEnoughPlayers( iClient )
 		return;
 	}
 	
-	if( iLastPlayer == g_iCurrentBomber )
-	{
-		decl String:szName[ 32 ];
-		GetClientName( iLastPlayer, szName, sizeof( szName ) );
-		
-		PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 was the last person alive, everyone else left or died, resetting the game.", szName );
-	}
-	else
-	{
-		// TODO: This seems to happen when a player takes control over a bot that currently has the bomb
-		
-		PrintToChatAll( "DEBUG: What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
-		
-		LogError( "Abnormal!! What happened here? last bomber: %i - current bomber: %i", g_iLastBomber, g_iCurrentBomber );
-	}
+	decl String:szName[ 32 ];
+	GetClientName( iLastPlayer, szName, sizeof( szName ) );
+	
+	PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 was the last person alive, everyone else left or died, resetting the game.", szName );
 	
 	ResetGame( );
 	

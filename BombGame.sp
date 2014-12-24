@@ -74,7 +74,7 @@ public OnPluginStart( )
 	HookEvent( "player_death",     OnPlayerDeath );
 	HookEvent( "player_death",     OnPlayerPreDeath, EventHookMode_Pre );
 	HookEvent( "jointeam_failed",  OnJoinTeamFailed, EventHookMode_Pre );
-	HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
+	//HookEvent( "round_announce_match_start", OnRoundAnnounceMatchStart, EventHookMode_Pre );
 	
 	HookUserMessage( GetUserMessageId( "TextMsg" ), OnUserMessage, true );
 	
@@ -363,7 +363,6 @@ public Action:OnRoundAnnounceMatchStart( Handle:hEvent, const String:szActionNam
 	return Plugin_Handled;
 }
 
-
 public Action:OnUserMessage( UserMsg:MsgId, Handle:hProtobuf, const iPlayers[], iNumPlayers, bool:bReliable, bool:bInit )
 {
 	decl String:szText[ 36 ];
@@ -397,13 +396,35 @@ public OnRoundStart( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		if( IsEnoughPlayersToPlay( ) )
 		{
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 The game is starting...\x01 Say\x02 /help\x01 for more information." );
-			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Say\x02 /stuck\x01 if your bomb is inaccessible." );
+			
+			PrintCenterTextAll( "Say /stuck or /s if your bomb is inaccessible." );
 			
 			StartGame( );
 		}
 		else
 		{
-			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Not enough players to start the game, once there are enough players you can say\x02 /start\x01" );
+			PrintToChatAll( " \x01\x0B\x04[BombGame]\x01 Not enough players to start the game." );
+		}
+	}
+	
+	new iEntity = -1;
+	new Float:vSpawnPos[ 3 ];
+	new iChicken;
+	
+	while( ( iEntity = FindEntityByClassname( iEntity, "info_player_terrorist" ) ) > -1 )
+	{
+		if( GetRandomInt( 1, 10 ) < 5 )
+		{
+			iChicken = CreateEntityByName( "chicken" );
+			
+			if( iChicken )
+			{
+				DispatchSpawn( iChicken );
+				
+				GetEntPropVector( iEntity, Prop_Data, "m_vecOrigin", vSpawnPos );
+				
+				TeleportEntity( iChicken, vSpawnPos, NULL_VECTOR, NULL_VECTOR );
+			}
 		}
 	}
 }
@@ -485,7 +506,7 @@ GiveBombStuff( iBomber = 0 )
 			PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 spawned with the bomb!", szName );
 		}
 		
-		PrintCenterTextAll( "%s now has the bomb!", szName );
+		PrintCenterTextAll( "%s [%d HP] now has the bomb!", szName, GetClientHealth( g_iCurrentBomber ) );
 		
 		GivePlayerItem( g_iCurrentBomber, "weapon_c4" );
 		
@@ -518,7 +539,10 @@ GiveBombStuff( iBomber = 0 )
 		
 		g_bFixTerminateRound = true;
 		
-		ForcePlayerSuicide( g_iFakeClient );
+		if( IsPlayerAlive( g_iFakeClient ) )
+		{
+			ForcePlayerSuicide( g_iFakeClient );
+		}
 	}
 	else
 	{
@@ -742,6 +766,21 @@ public OnPlayerDeath( Handle:hEvent, const String:szActionName[], bool:bDontBroa
 		
 		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s is a silly person and decided to suicide.", szName );
 	}
+	
+	new iChicken = CreateEntityByName( "chicken" );
+	
+	if( iChicken )
+	{
+		DispatchSpawn( iChicken );
+		
+		new Float:vSpawnPos[ 3 ];
+		
+		GetEntPropVector( iClient, Prop_Data, "m_vecOrigin", vSpawnPos );
+		
+		vSpawnPos[ 2 ] += 64.0;
+		
+		TeleportEntity( iChicken, vSpawnPos, NULL_VECTOR, NULL_VECTOR );
+	}
 }
 
 public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
@@ -760,10 +799,16 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 	
 	new iClient = GetClientOfUserId( GetEventInt( hEvent, "userid" ) );
 	
+	FakeClientCommand( iClient, "use weapon_c4" );
+	
 	if( g_iCurrentBomber != iClient )
 	{
+		new iPreviousHealth = 0;
+		
 		if( g_iCurrentBomber > 0 && IsPlayerAlive( g_iCurrentBomber ) )
 		{
+			iPreviousHealth = GetClientHealth( g_iCurrentBomber );
+			
 			HideRadar( g_iCurrentBomber );
 			
 			SetEntProp( g_iCurrentBomber, Prop_Data, "m_nModelIndex", g_iPreviousPlayerModel, 2 );
@@ -778,7 +823,14 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 		
 		//PrintToChatAll( " \x01\x0B\x04[BombGame]\x02 %s\x01 has picked up the bomb!", szName );
 		
-		PrintCenterTextAll( "%s now has the bomb!", szName );
+		if( iPreviousHealth > 0 )
+		{
+			PrintCenterTextAll( "%s [%d HP] now has the bomb! (previous bomber had %d HP left)", szName, GetClientHealth( iClient ), iPreviousHealth );
+		}
+		else
+		{
+			PrintCenterTextAll( "%s [%d HP] now has the bomb!", szName, GetClientHealth( iClient ) );
+		}
 		
 		EmitSoundToAll( "buttons/blip2.wav", iClient );
 		
@@ -798,14 +850,6 @@ public OnBombPickup( Handle:hEvent, const String:szActionName[], bool:bDontBroad
 public OnBombDropped( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
 {
 	g_iStatsBombDropped++;
-	
-	new iEntity = GetClientOfUserId( GetEventInt( hEvent, "entindex" ) );
-	
-	if( IsValidEdict( iEntity ) )
-	{
-		SetEntityRenderColor( iEntity, 241, 196, 15, 255 );
-		SetEntityRenderMode( iEntity, RENDER_TRANSCOLOR );
-	}
 }
 
 public Action:OnJoinTeamFailed( Handle:hEvent, const String:szActionName[], bool:bDontBroadcast )
